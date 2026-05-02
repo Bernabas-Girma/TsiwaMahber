@@ -462,6 +462,8 @@ class S {
   static String importCount(int n) => _am ? '$n መረጃ አስገባ' : 'Import $n items';
   static String get fileReadFailed =>
       _am ? 'ፋይሉን ማንበብ አልተቻለም' : 'Failed to read file';
+  static String get fileNeedsHeaderAndData =>
+      _am ? 'ፋይሉ ራስ ጌና መረጃ ሊኖረው ይገባል' : 'File must have a header row and data';
   static String get importConfirm => _am ? 'ማረጋገጫ' : 'Confirmation';
   static String get importConfirmMsg => _am
       ? 'መረጃዎቹን ወደ ውስጥ ማስገባት ይፈልጋሉ?\nነባር መረጃዎች አይቀየሩም — አዲስ ብቻ ይጨመራሉ።'
@@ -614,6 +616,11 @@ class S {
       _am ? 'CSV አባላት አስገባ' : 'CSV Import Members';
   static String get csvImportMembersDesc =>
       _am ? 'CSV ፋይል ከመረጃ ጋር አባላትን አስገባ' : 'Import members from CSV file';
+  static String get importMembers =>
+      _am ? 'አባላት አስገባ' : 'Import Members';
+  static String get importMembersDesc => _am
+      ? 'CSV ወይም XLSX ፋይል ከመረጃ ጋር አባላትን አስገባ'
+      : 'Import members from CSV or XLSX file';
   static String get importPreview => _am ? 'ቅድመ ዕይታ' : 'Preview';
   static String importingMembers(int n) =>
       _am ? '$n አባላት በማስገባት ላይ...' : 'Importing $n members...';

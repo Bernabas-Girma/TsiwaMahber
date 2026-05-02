@@ -100,7 +100,7 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'CSV ፋይል መርጠው መረጃ ያስገቡ',
+                    'CSV ወይም XLSX ፋይል መርጠው መረጃ ያስገቡ',
                     style: TextStyle(
                       fontSize: 13,
                       color: AppTheme.textMuted,
@@ -441,33 +441,32 @@ class _CsvImportScreenState extends State<CsvImportScreen> {
     setState(() => _isPicking = true);
 
     try {
-      final content = await _csvService.pickCsvFile();
-      if (content == null) {
+      final rows = await _csvService.pickAndParseFile();
+      if (rows == null) {
         setState(() => _isPicking = false);
         return;
       }
 
-      setState(() => _csvContent = content);
+      setState(() => _csvContent = 'loaded');
 
       switch (_selectedType) {
         case CsvEntityType.tsiwaMembers:
-          final members = await _csvService.parseMembersCsv(content);
+          final members = _csvService.parseMembersFromRows(rows);
           setState(() => _parsedMembers = members);
           break;
         case CsvEntityType.leaders:
-          final leaders = await _csvService.parseLeadersCsv(content);
+          final leaders = _csvService.parseLeadersFromRows(rows);
           setState(() => _parsedLeaders = leaders);
           break;
         case CsvEntityType.edirMembers:
-          final edirMembers =
-              await _csvService.parseEdirMembersCsv(content);
+          final edirMembers = _csvService.parseEdirMembersFromRows(rows);
           setState(() => _parsedEdirMembers = edirMembers);
           break;
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ፋይሉን ማንበብ አልተቻለም: $e')),
+          SnackBar(content: Text('${S.fileReadFailed}: $e')),
         );
       }
     } finally {

@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:csv/csv.dart';
+import 'package:excel/excel.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:tsiwa_mahber/core/l10n/app_strings.dart';
 import 'package:tsiwa_mahber/core/theme/app_theme.dart';
@@ -30,27 +33,25 @@ class _GlobalMemberCsvImportScreenState
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['csv'],
+        allowedExtensions: ['csv', 'xlsx'],
         withData: true,
       );
 
       if (result == null || result.files.isEmpty) return;
 
-      final bytes = result.files.first.bytes;
-      if (bytes == null) {
-        setState(() => _error = S.fileReadFailed);
-        return;
+      final file = result.files.first;
+      final extension = file.extension?.toLowerCase() ?? '';
+
+      List<List<dynamic>> rows;
+
+      if (extension == 'xlsx') {
+        rows = await _parseXlsx(file);
+      } else {
+        rows = await _parseCsv(file);
       }
 
-      var content = utf8.decode(bytes, allowMalformed: true);
-      // Remove BOM if present
-      if (content.startsWith('\uFEFF')) {
-        content = content.substring(1);
-      }
-
-      final rows = const CsvToListConverter().convert(content);
       if (rows.length < 2) {
-        setState(() => _error = 'CSV file must have a header row and data');
+        setState(() => _error = S.fileNeedsHeaderAndData);
         return;
       }
 
@@ -60,8 +61,72 @@ class _GlobalMemberCsvImportScreenState
         _previewMembers = _parseMembers(rows);
       });
     } catch (e) {
-      setState(() => _error = S.fileReadFailed);
+      setState(() => _error = '${S.fileReadFailed}: $e');
     }
+  }
+
+  Future<List<List<dynamic>>> _parseCsv(PlatformFile file) async {
+    String content;
+
+    // Try bytes first, fall back to path-based reading
+    final bytes = file.bytes;
+    if (bytes != null && bytes.isNotEmpty) {
+      content = utf8.decode(bytes, allowMalformed: true);
+    } else if (!kIsWeb && file.path != null) {
+      content = await File(file.path!).readAsString();
+    } else {
+      throw Exception(S.fileReadFailed);
+    }
+
+    // Remove BOM if present
+    if (content.startsWith('\uFEFF')) {
+      content = content.substring(1);
+    }
+    // Normalise line endings
+    content = content.replaceAll('\r\n', '\n').replaceAll('\r', '\n').trim();
+
+    return const CsvToListConverter(
+      shouldParseNumbers: false,
+      eol: '\n',
+    ).convert(content);
+  }
+
+  Future<List<List<dynamic>>> _parseXlsx(PlatformFile file) async {
+    Uint8List bytes;
+
+    if (file.bytes != null && file.bytes!.isNotEmpty) {
+      bytes = file.bytes!;
+    } else if (!kIsWeb && file.path != null) {
+      bytes = await File(file.path!).readAsBytes();
+    } else {
+      throw Exception(S.fileReadFailed);
+    }
+
+    final excel = Excel.decodeBytes(bytes);
+    final rows = <List<dynamic>>[];
+
+    // Use the first sheet
+    if (excel.tables.isEmpty) return rows;
+    final sheetName = excel.tables.keys.first;
+    final sheet = excel.tables[sheetName];
+    if (sheet == null) return rows;
+
+    for (final row in sheet.rows) {
+      final values = row.map<String>((cell) {
+        if (cell == null || cell.value == null) return '';
+        final v = cell.value;
+        if (v is IntCellValue) return v.value.toString();
+        if (v is DoubleCellValue) return v.value.toInt().toString();
+        if (v is TextCellValue) return v.value.toString();
+        return v.toString();
+      }).toList();
+
+      // Skip fully empty rows
+      if (values.every((v) => v.toString().trim().isEmpty)) continue;
+      rows.add(values);
+    }
+
+    return rows;
   }
 
   List<AppUser> _parseMembers(List<List<dynamic>> rows) {
@@ -71,7 +136,13 @@ class _GlobalMemberCsvImportScreenState
     // Find column indices — support both Amharic and English headers
     int nameIdx = _findCol(headers, ['ሙሉ ስም', 'full name', 'name', 'ስም']);
     int phoneIdx = _findCol(headers, ['ስልክ', 'phone', 'ስልክ ቁጥር']);
-    int codeIdx = _findCol(headers, ['ኮድ', 'code', 'access code', 'የመግቢያ ኮድ', 'password']);
+    int codeIdx = _findCol(headers, [
+      'ኮድ',
+      'code',
+      'access code',
+      'የመግቢያ ኮድ',
+      'password',
+    ]);
 
     if (nameIdx == -1) nameIdx = 0;
     if (phoneIdx == -1) phoneIdx = 1;
@@ -83,10 +154,19 @@ class _GlobalMemberCsvImportScreenState
       final name = row[nameIdx].toString().trim();
       if (name.isEmpty) continue;
 
-      final phone = phoneIdx < row.length ? row[phoneIdx].toString().trim() : '';
-      final code = codeIdx >= 0 && codeIdx < row.length
-          ? row[codeIdx].toString().trim()
-          : '1234';
+      var phone =
+          phoneIdx < row.length ? row[phoneIdx].toString().trim() : '';
+      // Ensure phone starts with 0 (handles XLSX storing as number)
+      if (phone.isNotEmpty &&
+          !phone.startsWith('0') &&
+          !phone.startsWith('+')) {
+        phone = '0$phone';
+      }
+
+      final code =
+          codeIdx >= 0 && codeIdx < row.length
+              ? row[codeIdx].toString().trim()
+              : '1234';
 
       members.add(AppUser(
         displayName: name,
@@ -116,11 +196,12 @@ class _GlobalMemberCsvImportScreenState
     setState(() => _isLoading = true);
 
     try {
-      final count = await _authRepository.batchCreateMembers(_previewMembers);
+      final count =
+          await _authRepository.batchCreateMembers(_previewMembers);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.membersImported(count))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(S.membersImported(count))));
         Navigator.pop(context);
       }
     } catch (e) {
@@ -136,11 +217,11 @@ class _GlobalMemberCsvImportScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(S.csvImportMembers),
-      ),
+      appBar: AppBar(title: Text(S.importMembers)),
       body: _isLoading
-          ? LoadingState(message: S.importingMembers(_previewMembers.length))
+          ? LoadingState(
+              message: S.importingMembers(_previewMembers.length),
+            )
           : Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -153,12 +234,13 @@ class _GlobalMemberCsvImportScreenState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            S.csvImportMembersDesc,
+                            S.importMembersDesc,
                             style: const TextStyle(color: AppTheme.textMuted),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'CSV: ሙሉ ስም, ስልክ, ኮድ',
+                            'CSV: ሙሉ ስም, ስልክ, ኮድ\n'
+                            'XLSX: ሙሉ ስም, ስልክ (የመጀመሪያው ሺት)',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppTheme.textMuted.withValues(alpha: 0.7),
@@ -190,8 +272,10 @@ class _GlobalMemberCsvImportScreenState
                         color: Colors.red.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text(_error!,
-                          style: const TextStyle(color: Colors.red)),
+                      child: Text(
+                        _error!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                     ),
                   ],
                   if (_previewMembers.isNotEmpty) ...[
