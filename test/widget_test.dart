@@ -83,7 +83,7 @@ void main() {
     test('MemberRole displayName returns Amharic', () {
       expect(MemberRole.muse.displayName, 'ሙሴ');
       expect(MemberRole.assistantMuse.displayName, 'ረዳት ሙሴ');
-      expect(MemberRole.member.displayName, 'አባል');
+      expect(MemberRole.member.displayName, 'ማህበርተኛ');
       expect(MemberRole.observer.displayName, 'ታዛቢ');
     });
 
