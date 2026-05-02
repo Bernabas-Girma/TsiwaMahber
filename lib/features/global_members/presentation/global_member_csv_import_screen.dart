@@ -106,6 +106,7 @@ class _GlobalMemberCsvImportScreenState
     final rows = <List<dynamic>>[];
 
     // Use the first sheet
+    if (excel.tables.isEmpty) return rows;
     final sheetName = excel.tables.keys.first;
     final sheet = excel.tables[sheetName];
     if (sheet == null) return rows;

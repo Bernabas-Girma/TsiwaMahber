@@ -485,6 +485,7 @@ class CsvService {
     final excel = Excel.decodeBytes(bytes);
     final rows = <List<String>>[];
 
+    if (excel.tables.isEmpty) return rows;
     final sheetName = excel.tables.keys.first;
     final sheet = excel.tables[sheetName];
     if (sheet == null) return rows;
