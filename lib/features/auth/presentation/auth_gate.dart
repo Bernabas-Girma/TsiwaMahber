@@ -47,7 +47,6 @@ class _AuthGateState extends State<AuthGate> {
   void initState() {
     super.initState();
     _authStream = _authRepository.authStateChanges;
-    _initDefaults();
   }
 
   Future<void> _initDefaults() async {
@@ -57,8 +56,7 @@ class _AuthGateState extends State<AuthGate> {
       await _areaRepository.ensureDefaultArea();
       await _developerService.ensureDefaultDevelopers();
     } catch (_) {
-      // Ignore permission errors; defaults will be created once a
-      // developer signs in.
+      // Silently ignore; area/dev docs may already exist.
     }
   }
 
@@ -67,6 +65,9 @@ class _AuthGateState extends State<AuthGate> {
     _loadedDevUid = uid;
     setState(() => _devUserLoading = true);
     try {
+      // Ensure default area and developers exist now that we have
+      // authenticated dev credentials for Firestore writes.
+      await _initDefaults();
       final user = await _authRepository.getAppUser(uid);
       if (mounted) {
         setState(() {
