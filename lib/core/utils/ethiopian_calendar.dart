@@ -124,7 +124,7 @@ class EthiopianCalendar {
   }
 
   static int daysUntilDate(int targetMonth, int targetDay) {
-    if (targetMonth < 1 || targetMonth > 12) return -1;
+    if (targetMonth < 1 || targetMonth > 13) return -1;
     if (targetDay < 1 || targetDay > 30) return -1;
 
     final now = today();

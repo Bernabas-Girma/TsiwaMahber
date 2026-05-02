@@ -257,8 +257,8 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
                 ...List.generate(5, (i) {
                   int month = ethToday.month + i + 1;
                   int year = ethToday.year;
-                  if (month > 12) {
-                    month -= 12;
+                  if (month > 13) {
+                    month -= 13;
                     year++;
                   }
                   final idx = (currentIdx + i + 1) % rotationMembers.length;

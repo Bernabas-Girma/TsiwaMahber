@@ -25,10 +25,15 @@ class AppConstants {
     'ሰኔ',
     'ሐምሌ',
     'ነሐሴ',
+    'ጳጉሜ',
   ];
 
+  /// Months 1-12 are used for tsiwa rotation/zikir; month 13 (ጳጉሜ)
+  /// still exists in the Ethiopian calendar for date display.
+  static const int tsiwaMonthCount = 12;
+
   static String ethiopianMonthName(int month) {
-    if (month < 1 || month > 12) return '';
+    if (month < 1 || month > 13) return '';
     return ethiopianMonths[month - 1];
   }
 }

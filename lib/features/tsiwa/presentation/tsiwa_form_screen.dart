@@ -300,7 +300,7 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
                     const SizedBox(height: 8),
                     DropdownButtonFormField<int>(
                       initialValue: selectedMonth,
-                      items: List.generate(12, (i) {
+                      items: List.generate(AppConstants.tsiwaMonthCount, (i) {
                         return DropdownMenuItem(
                           value: i + 1,
                           child: Text(AppConstants.ethiopianMonths[i]),

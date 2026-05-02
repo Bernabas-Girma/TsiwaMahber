@@ -24,19 +24,23 @@ void main() {
       expect(AppConstants.defaultAreaShortName, 'ገላን');
     });
 
-    test('Ethiopian month names has 12 entries', () {
-      expect(AppConstants.ethiopianMonths.length, 12);
+    test('Ethiopian month names has 13 entries', () {
+      expect(AppConstants.ethiopianMonths.length, 13);
     });
 
     test('ethiopianMonthName returns correct name', () {
       expect(AppConstants.ethiopianMonthName(1), 'መስከረም');
       expect(AppConstants.ethiopianMonthName(5), 'ጥር');
-      expect(AppConstants.ethiopianMonthName(12), 'ነሐሴ');
+      expect(AppConstants.ethiopianMonthName(13), 'ጳጉሜ');
+    });
+
+    test('tsiwaMonthCount is 12 (excludes Pagume for tsiwa)', () {
+      expect(AppConstants.tsiwaMonthCount, 12);
     });
 
     test('ethiopianMonthName returns empty for invalid month', () {
       expect(AppConstants.ethiopianMonthName(0), '');
-      expect(AppConstants.ethiopianMonthName(13), '');
+      expect(AppConstants.ethiopianMonthName(14), '');
     });
   });
 
@@ -214,7 +218,7 @@ void main() {
     test('today returns a valid date', () {
       final today = EthiopianCalendar.today();
       expect(today.year, greaterThan(2010));
-      expect(today.month, inInclusiveRange(1, 13)); // Ethiopian calendar still has 13 months
+      expect(today.month, inInclusiveRange(1, 13));
       expect(today.day, inInclusiveRange(1, 30));
     });
   });
