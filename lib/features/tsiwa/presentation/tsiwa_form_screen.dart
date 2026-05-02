@@ -299,7 +299,7 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<int>(
-                      value: selectedMonth,
+                      initialValue: selectedMonth,
                       items: List.generate(12, (i) {
                         return DropdownMenuItem(
                           value: i + 1,
@@ -329,7 +329,7 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<int>(
-                      value: selectedDay,
+                      initialValue: selectedDay,
                       items: List.generate(30, (i) {
                         return DropdownMenuItem(
                           value: i + 1,

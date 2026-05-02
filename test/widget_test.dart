@@ -24,19 +24,19 @@ void main() {
       expect(AppConstants.defaultAreaShortName, 'ገላን');
     });
 
-    test('Ethiopian month names has 13 entries', () {
-      expect(AppConstants.ethiopianMonths.length, 13);
+    test('Ethiopian month names has 12 entries', () {
+      expect(AppConstants.ethiopianMonths.length, 12);
     });
 
     test('ethiopianMonthName returns correct name', () {
       expect(AppConstants.ethiopianMonthName(1), 'መስከረም');
       expect(AppConstants.ethiopianMonthName(5), 'ጥር');
-      expect(AppConstants.ethiopianMonthName(13), 'ጳጉሜ');
+      expect(AppConstants.ethiopianMonthName(12), 'ነሐሴ');
     });
 
     test('ethiopianMonthName returns empty for invalid month', () {
       expect(AppConstants.ethiopianMonthName(0), '');
-      expect(AppConstants.ethiopianMonthName(14), '');
+      expect(AppConstants.ethiopianMonthName(13), '');
     });
   });
 
@@ -214,7 +214,7 @@ void main() {
     test('today returns a valid date', () {
       final today = EthiopianCalendar.today();
       expect(today.year, greaterThan(2010));
-      expect(today.month, inInclusiveRange(1, 13));
+      expect(today.month, inInclusiveRange(1, 13)); // Ethiopian calendar still has 13 months
       expect(today.day, inInclusiveRange(1, 30));
     });
   });
@@ -222,17 +222,19 @@ void main() {
   group('TsiwaEvent', () {
     test('TsiwaEventType displayName returns Amharic', () {
       expect(TsiwaEventType.monthlyTsiwa.displayName, 'የወርሃዊ ፅዋ');
-      expect(TsiwaEventType.zikir.displayName, 'ዝክር');
-      expect(TsiwaEventType.feedingDay.displayName, 'ማብላት');
+      expect(TsiwaEventType.yearlyZikir.displayName, 'የዓመታዊ በዓል ዝክር');
       expect(TsiwaEventType.other.displayName, 'ሌላ');
     });
 
     test('TsiwaEventType fromString parses correctly', () {
       expect(TsiwaEventType.fromString('monthly_tsiwa'),
           TsiwaEventType.monthlyTsiwa);
-      expect(TsiwaEventType.fromString('zikir'), TsiwaEventType.zikir);
+      expect(TsiwaEventType.fromString('yearly_zikir'),
+          TsiwaEventType.yearlyZikir);
+      expect(TsiwaEventType.fromString('zikir'),
+          TsiwaEventType.yearlyZikir);
       expect(TsiwaEventType.fromString('feeding_day'),
-          TsiwaEventType.feedingDay);
+          TsiwaEventType.yearlyZikir);
       expect(TsiwaEventType.fromString('unknown'), TsiwaEventType.other);
     });
 
