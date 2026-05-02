@@ -29,7 +29,9 @@ class _GlobalMemberFormScreenState extends State<GlobalMemberFormScreen> {
   final _edirRepository = EdirRepository();
 
   late final TextEditingController _nameController;
+  late final TextEditingController _christianNameController;
   late final TextEditingController _phoneController;
+  late final TextEditingController _phone2Controller;
   late final TextEditingController _codeController;
 
   bool _isLoading = false;
@@ -50,7 +52,9 @@ class _GlobalMemberFormScreenState extends State<GlobalMemberFormScreen> {
     super.initState();
     final m = widget.existingMember;
     _nameController = TextEditingController(text: m?.displayName ?? '');
+    _christianNameController = TextEditingController(text: m?.christianName ?? '');
     _phoneController = TextEditingController(text: m?.phone ?? '');
+    _phone2Controller = TextEditingController(text: m?.phone2 ?? '');
     _codeController = TextEditingController(text: m?.passwordCode ?? '');
 
     if (m != null) {
@@ -76,7 +80,9 @@ class _GlobalMemberFormScreenState extends State<GlobalMemberFormScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _christianNameController.dispose();
     _phoneController.dispose();
+    _phone2Controller.dispose();
     _codeController.dispose();
     super.dispose();
   }
@@ -109,6 +115,14 @@ class _GlobalMemberFormScreenState extends State<GlobalMemberFormScreen> {
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
+                      controller: _christianNameController,
+                      decoration: InputDecoration(
+                        labelText: S.christianName,
+                        prefixIcon: const Icon(Icons.church_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
                       controller: _phoneController,
                       decoration: InputDecoration(
                         labelText: S.phoneNumber,
@@ -118,6 +132,16 @@ class _GlobalMemberFormScreenState extends State<GlobalMemberFormScreen> {
                       keyboardType: TextInputType.phone,
                       validator: (v) =>
                           (v == null || v.trim().isEmpty) ? S.phoneRequired : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _phone2Controller,
+                      decoration: InputDecoration(
+                        labelText: S.additionalPhone,
+                        prefixIcon: const Icon(Icons.phone_outlined),
+                        hintText: S.optionalField,
+                      ),
+                      keyboardType: TextInputType.phone,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -289,7 +313,9 @@ class _GlobalMemberFormScreenState extends State<GlobalMemberFormScreen> {
       if (_isEditing) {
         final updated = widget.existingMember!.copyWith(
           displayName: _nameController.text.trim(),
+          christianName: _christianNameController.text.trim(),
           phone: _phoneController.text.trim(),
+          phone2: _phone2Controller.text.trim(),
           passwordCode: _codeController.text,
           role: role,
           assignedTsiwaIds: _selectedTsiwaIds.toList(),
@@ -315,7 +341,9 @@ class _GlobalMemberFormScreenState extends State<GlobalMemberFormScreen> {
       } else {
         final error = await _authRepository.createMemberAccount(
           displayName: _nameController.text.trim(),
+          christianName: _christianNameController.text.trim(),
           phone: _phoneController.text.trim(),
+          phone2: _phone2Controller.text.trim(),
           passwordCode: _codeController.text,
           areaId: AppConstants.defaultAreaId,
           role: role,

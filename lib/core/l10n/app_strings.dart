@@ -242,9 +242,9 @@ class S {
   static String get rotationOrderTab => _am ? 'ተራ ቅደም ተከተል' : 'Rotation Order';
   static String get eventHistory => _am ? 'የክንውን ታሪክ' : 'Event History';
   static String get noMembersInRotation =>
-      _am ? 'በተራ ውስጥ ያለ አባል የለም' : 'No members in rotation';
+      _am ? 'በተራ ውስጥ ያለ ማህበርተኛ የለም' : 'No members in rotation';
   static String get membersMustBeInRotation => _am
-      ? 'አባላት ተመዝግበው በተራ ውስጥ መሆን አለባቸው'
+      ? 'ማህበርተኞች ተመዝግበው በተራ ውስጥ መሆን አለባቸው'
       : 'Members must be registered and in rotation';
   static String get currentTurn => _am ? 'አሁን ተራ' : 'Current Turn';
   static String get nextTurn => _am ? 'ቀጣይ ተራ' : 'Next Turn';
@@ -264,7 +264,7 @@ class S {
   static String get completed => _am ? 'ተፈጸመ' : 'Completed';
   static String get cancelled => _am ? 'ተሰረዘ' : 'Cancelled';
   static String get type => _am ? 'ዓይነት' : 'Type';
-  static String get responsibleMember => _am ? 'ኃላፊ አባል' : 'Responsible Member';
+  static String get responsibleMember => _am ? 'ኃላፊ ማህበርተኛ' : 'Responsible Member';
 
   // ── Tsiwa Event Types ──
   static String get monthlyTsiwa => _am ? 'የወርሃዊ ፅዋ' : 'Monthly Tsiwa';
@@ -547,7 +547,7 @@ class S {
   static String get accountKicked => _am
       ? 'ከአካውንት ተባርረዋል — አስተዳዳሪን ያነጋግሩ'
       : 'You have been logged out — contact admin';
-  static String get memberLogin => _am ? 'የአባል መግቢያ' : 'Member Login';
+  static String get memberLogin => _am ? 'የማህበርተኛ መግቢያ' : 'Member Login';
   static String get enterPhoneAndCode => _am
       ? 'ስልክ ቁጥርዎን እና የይለፍ ኮድዎን ያስገቡ'
       : 'Enter your phone number and access code';
@@ -557,14 +557,14 @@ class S {
       _am ? 'ይለፍ ኮድ ተቀይሯል' : 'Access code updated';
   static String get kickOut => _am ? 'አስወጣ' : 'Kick Out';
   static String get kickOutConfirm => _am
-      ? 'ይህን አባል ከአካውንት ማስወጣት ይፈልጋሉ?'
+      ? 'ይህን ማህበርተኛ ከአካውንት ማስወጣት ይፈልጋሉ?'
       : 'Do you want to kick out this member?';
   static String get kicked => _am ? 'ተባርሯል' : 'Kicked out';
   static String get reinstated => _am ? 'ተመልሷል' : 'Reinstated';
   static String get addMemberAccount =>
-      _am ? 'አባል ተጠቃሚ ፍጠር' : 'Create Member Account';
+      _am ? 'ማህበርተኛ ተጠቃሚ ፍጠር' : 'Create Member Account';
   static String get memberAccountCreated =>
-      _am ? 'የአባል አካውንት ተፈጥሯል' : 'Member account created';
+      _am ? 'የማህበርተኛ አካውንት ተፈጥሯል' : 'Member account created';
   static String get phoneAlreadyRegistered => _am
       ? 'ይህ ስልክ ቁጥር አስቀድሞ ተመዝግቧል'
       : 'This phone number is already registered';
@@ -580,6 +580,7 @@ class S {
   static String get allUsers => _am ? 'ሁሉም ተጠቃሚዎች' : 'All Users';
 
   // ── Global Members ──
+  static String get optionalField => _am ? '(አይጋደልም)' : '(Optional)';
   static String get globalMembers => _am ? 'አባላት' : 'Members';
   static String get manageGlobalMembers =>
       _am ? 'አባላትን ያስተዳድሩ' : 'Manage Members';
@@ -607,7 +608,7 @@ class S {
   static String get tsiwaRole => _am ? 'የፅዋ ሚና' : 'Tsiwa Role';
   static String get roleMuse => _am ? 'ሙሴ' : 'Muse';
   static String get roleAssistantMuse => _am ? 'ረዳት ሙሴ' : 'Assistant Muse';
-  static String get roleMemberTsiwa => _am ? 'አባል' : 'Member';
+  static String get roleMemberTsiwa => _am ? 'ማህበርተኛ' : 'Member';
   static String get roleObserver => _am ? 'ታዛቢ' : 'Observer';
   static String get isEdirAmerar => _am ? 'የእድር አመራር' : 'Edir Leader';
   static String get edirAmerarDesc =>
@@ -617,15 +618,15 @@ class S {
   static String get csvImportMembersDesc =>
       _am ? 'CSV ፋይል ከመረጃ ጋር አባላትን አስገባ' : 'Import members from CSV file';
   static String get importMembers =>
-      _am ? 'አባላት አስገባ' : 'Import Members';
+      _am ? 'ማህበርተኞች አስገባ' : 'Import Members';
   static String get importMembersDesc => _am
-      ? 'CSV ወይም XLSX ፋይል ከመረጃ ጋር አባላትን አስገባ'
+      ? 'CSV ወይም XLSX ፋይል ከመረጃ ጋር ማህበርተኞችን አስገባ'
       : 'Import members from CSV or XLSX file';
   static String get importPreview => _am ? 'ቅድመ ዕይታ' : 'Preview';
   static String importingMembers(int n) =>
-      _am ? '$n አባላት በማስገባት ላይ...' : 'Importing $n members...';
+      _am ? '$n ማህበርተኞች በማስገባት ላይ...' : 'Importing $n members...';
   static String membersImported(int n) =>
-      _am ? '$n አባላት ተገብተዋል' : '$n members imported';
+      _am ? '$n ማህበርተኞች ተገብተዋል' : '$n members imported';
   static String get accessCode => _am ? 'የመግቢያ ኮድ' : 'Access Code';
 
   // ── Member Home ──
@@ -649,4 +650,19 @@ class S {
   static String get makeAdmin => _am ? 'አስተዳዳሪ አድርግ' : 'Make Admin';
   static String paidBirr(String v) => _am ? '$v ብር ከፍሏል' : '$v Birr paid';
   static String owedBirr(String v) => _am ? '$v ብር ቀሪ' : '$v Birr owed';
+
+  // ── Monthly Order ──
+  static String get monthlyOrder => _am ? 'የወር ተራ' : 'Monthly Order';
+  static String get monthlyOrderTable => _am ? 'የወር ተራ ሰንጠረዥ' : 'Monthly Order Table';
+  static String get assignOrder => _am ? 'ተራ ስጥ' : 'Assign Order';
+  static String get selectMember => _am ? 'ማህበርተኛ ይምረጡ' : 'Select Member';
+  static String get unassigned => _am ? 'አልተመደበም' : 'Unassigned';
+  static String get orderSaved => _am ? 'ተራ ተቀምጧል' : 'Order saved';
+  static String get orderSaveFailed => _am ? 'ተራ ማስቀመጥ አልተቻለም' : 'Failed to save order';
+  static String get yourNextOrder => _am ? 'የእርስዎ ቀጣይ ተራ' : 'Your Next Order';
+  static String get currentOrder => _am ? 'የአሁኑ ወር ተራ' : 'Current Month Order';
+  static String get upcomingOrders => _am ? 'ቀጣይ ተራዎች' : 'Upcoming Orders';
+  static String get allOrders => _am ? 'ሁሉም ተራዎች' : 'All Orders';
+  static String daysRemaining(int d) => _am ? '$d ቀናት ቀርተዋል' : '$d days remaining';
+  static String monthsRemaining(int m, int d) => _am ? '$m ወር ከ$d ቀናት' : '$m months $d days';
 }

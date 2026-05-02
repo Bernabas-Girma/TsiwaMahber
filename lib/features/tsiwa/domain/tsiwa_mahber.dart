@@ -43,6 +43,9 @@ class TsiwaMahber {
   final int memberCount;
   final int museCount;
 
+  /// Maps month number (1-12) to member ID for monthly ordering.
+  final Map<int, String> monthlyOrder;
+
   final bool isActive;
   final bool isArchived;
 
@@ -63,6 +66,7 @@ class TsiwaMahber {
     this.currentRotationIndex = 0,
     this.memberCount = 0,
     this.museCount = 0,
+    this.monthlyOrder = const {},
     this.isActive = true,
     this.isArchived = false,
     this.createdAt,
@@ -127,11 +131,22 @@ class TsiwaMahber {
       currentRotationIndex: data['currentRotationIndex'] as int? ?? 0,
       memberCount: data['memberCount'] as int? ?? 0,
       museCount: data['museCount'] as int? ?? 0,
+      monthlyOrder: _parseMonthlyOrder(data['monthlyOrder']),
       isActive: data['isActive'] as bool? ?? true,
       isArchived: data['isArchived'] as bool? ?? false,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );
+  }
+
+  static Map<int, String> _parseMonthlyOrder(dynamic raw) {
+    if (raw == null) return {};
+    final map = Map<String, dynamic>.from(raw as Map);
+    return map.map((k, v) => MapEntry(int.parse(k), v as String));
+  }
+
+  Map<String, dynamic> _serializeMonthlyOrder() {
+    return monthlyOrder.map((k, v) => MapEntry(k.toString(), v));
   }
 
   Map<String, dynamic> toCreateMap() {
@@ -147,6 +162,7 @@ class TsiwaMahber {
       'currentRotationIndex': currentRotationIndex,
       'memberCount': memberCount,
       'museCount': museCount,
+      'monthlyOrder': _serializeMonthlyOrder(),
       'isActive': isActive,
       'isArchived': isArchived,
       'createdAt': FieldValue.serverTimestamp(),
@@ -164,6 +180,7 @@ class TsiwaMahber {
       'monthlyTsiwaDay': monthlyTsiwaDay,
       'monthlyTsiwaDayNote': monthlyTsiwaDayNote,
       'yearlyZikir': yearlyZikir.map((e) => e.toMap()).toList(),
+      'monthlyOrder': _serializeMonthlyOrder(),
       'isActive': isActive,
       'isArchived': isArchived,
       'updatedAt': FieldValue.serverTimestamp(),
@@ -184,6 +201,7 @@ class TsiwaMahber {
     int? currentRotationIndex,
     int? memberCount,
     int? museCount,
+    Map<int, String>? monthlyOrder,
     bool? isActive,
     bool? isArchived,
     DateTime? createdAt,
@@ -203,6 +221,7 @@ class TsiwaMahber {
       currentRotationIndex: currentRotationIndex ?? this.currentRotationIndex,
       memberCount: memberCount ?? this.memberCount,
       museCount: museCount ?? this.museCount,
+      monthlyOrder: monthlyOrder ?? this.monthlyOrder,
       isActive: isActive ?? this.isActive,
       isArchived: isArchived ?? this.isArchived,
       createdAt: createdAt ?? this.createdAt,

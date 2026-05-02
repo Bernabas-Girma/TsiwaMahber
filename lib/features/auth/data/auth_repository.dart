@@ -21,11 +21,21 @@ class AuthRepository {
   // ── Member (phone+code) auth ──
 
   Future<AppUser> signInWithPhone(String phone, String code) async {
-    final query = await _firestore
+    // Search primary phone
+    var query = await _firestore
         .collection('users')
         .where('phone', isEqualTo: phone)
         .limit(1)
         .get();
+
+    // If not found, search secondary phone (phone2)
+    if (query.docs.isEmpty) {
+      query = await _firestore
+          .collection('users')
+          .where('phone2', isEqualTo: phone)
+          .limit(1)
+          .get();
+    }
 
     if (query.docs.isEmpty) {
       throw S.phoneNotRegistered;
@@ -82,7 +92,9 @@ class AuthRepository {
 
   Future<String?> createMemberAccount({
     required String displayName,
+    String christianName = '',
     required String phone,
+    String phone2 = '',
     required String passwordCode,
     required String areaId,
     UserRole role = UserRole.member,
@@ -103,7 +115,9 @@ class AuthRepository {
 
     final user = AppUser(
       displayName: displayName,
+      christianName: christianName,
       phone: phone,
+      phone2: phone2,
       passwordCode: passwordCode,
       role: role,
       areaId: areaId,
@@ -189,11 +203,15 @@ class AuthRepository {
   Future<void> updateProfile({
     required String uid,
     required String displayName,
+    String christianName = '',
     required String phone,
+    String phone2 = '',
   }) async {
     await _firestore.collection('users').doc(uid).update({
       'displayName': displayName,
+      'christianName': christianName,
       'phone': phone,
+      'phone2': phone2,
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }

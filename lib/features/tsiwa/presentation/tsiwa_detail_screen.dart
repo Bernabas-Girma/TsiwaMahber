@@ -82,6 +82,8 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
                 _buildMembersSection(tsiwa),
                 const SizedBox(height: 16),
                 _buildRotationSection(tsiwa),
+                const SizedBox(height: 16),
+                _buildMonthlyOrderSection(tsiwa),
                 const SizedBox(height: 32),
               ],
             ),
@@ -404,6 +406,173 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildMonthlyOrderSection(TsiwaMahber tsiwa) {
+    return StreamBuilder<List<AppUser>>(
+      stream: _authRepository.watchMembersByTsiwa(widget.tsiwaId),
+      builder: (context, snap) {
+        final members = snap.data ?? [];
+
+        return _SectionCard(
+          title: S.monthlyOrderTable,
+          icon: Icons.table_chart_outlined,
+          iconColor: Colors.deepPurple,
+          children: [
+            for (int m = 1; m <= AppConstants.tsiwaMonthCount; m++)
+              _buildMonthOrderRow(tsiwa, m, members),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildMonthOrderRow(
+    TsiwaMahber tsiwa,
+    int month,
+    List<AppUser> members,
+  ) {
+    final memberId = tsiwa.monthlyOrder[month];
+    final assigned = memberId != null
+        ? members.where((m) => m.uid == memberId).firstOrNull
+        : null;
+    final monthName = AppConstants.ethiopianMonthName(month);
+    final ethToday = EthiopianCalendar.today();
+    final isCurrent = ethToday.month == month;
+
+    return InkWell(
+      onTap: () => _showAssignDialog(tsiwa, month, members),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        decoration: BoxDecoration(
+          color: isCurrent ? AppTheme.primary.withValues(alpha: 0.08) : null,
+          border: Border(
+            bottom: BorderSide(
+              color: AppTheme.textMuted.withValues(alpha: 0.15),
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 80,
+              child: Text(
+                monthName,
+                style: TextStyle(
+                  fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Text(
+                assigned?.displayName ?? S.unassigned,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: assigned != null ? null : AppTheme.textMuted,
+                  fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
+            if (isCurrent)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  S.now,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppTheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            const SizedBox(width: 4),
+            const Icon(Icons.edit_outlined, size: 16, color: AppTheme.textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showAssignDialog(
+    TsiwaMahber tsiwa,
+    int month,
+    List<AppUser> members,
+  ) async {
+    final monthName = AppConstants.ethiopianMonthName(month);
+    final currentId = tsiwa.monthlyOrder[month];
+
+    final selected = await showDialog<String?>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('$monthName - ${S.assignOrder}'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.clear, color: Colors.red),
+                title: Text(S.unassigned),
+                selected: currentId == null,
+                onTap: () => Navigator.pop(ctx, '__clear__'),
+              ),
+              ...members.map((m) => ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor:
+                          AppTheme.primary.withValues(alpha: 0.15),
+                      radius: 16,
+                      child: Text(
+                        m.displayName.isNotEmpty
+                            ? m.displayName[0]
+                            : '?',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                    title: Text(m.displayName),
+                    subtitle: m.christianName.isNotEmpty
+                        ? Text(m.christianName,
+                            style: const TextStyle(fontSize: 12))
+                        : null,
+                    selected: m.uid == currentId,
+                    onTap: () => Navigator.pop(ctx, m.uid),
+                  )),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (selected == null || !mounted) return;
+
+    try {
+      final newOrder = Map<int, String>.from(tsiwa.monthlyOrder);
+      if (selected == '__clear__') {
+        newOrder.remove(month);
+      } else {
+        newOrder[month] = selected;
+      }
+      await _tsiwaRepository.updateTsiwa(
+        widget.areaId,
+        tsiwa.copyWith(monthlyOrder: newOrder),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.orderSaved)),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.orderSaveFailed)),
+        );
+      }
+    }
   }
 
   void _edit(TsiwaMahber tsiwa) {

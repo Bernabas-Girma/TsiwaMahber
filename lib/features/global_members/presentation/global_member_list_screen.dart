@@ -89,6 +89,7 @@ class _GlobalMemberListScreenState extends State<GlobalMemberListScreen> {
             : members
                 .where((m) =>
                     m.displayName.toLowerCase().contains(_searchQuery) ||
+                    m.christianName.toLowerCase().contains(_searchQuery) ||
                     m.phone.contains(_searchQuery))
                 .toList();
 
@@ -151,6 +152,9 @@ class _GlobalMemberListScreenState extends State<GlobalMemberListScreen> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (member.christianName.isNotEmpty)
+              Text(member.christianName,
+                  style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
             Text(member.phone,
                 style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
             if (chips.isNotEmpty) ...[

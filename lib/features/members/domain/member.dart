@@ -13,7 +13,7 @@ enum MemberRole {
       case MemberRole.assistantMuse:
         return 'ረዳት ሙሴ';
       case MemberRole.member:
-        return 'አባል';
+        return 'ማህበርተኛ';
       case MemberRole.observer:
         return 'ታዛቢ';
     }

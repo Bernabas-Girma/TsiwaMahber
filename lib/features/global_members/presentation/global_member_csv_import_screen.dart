@@ -135,7 +135,9 @@ class _GlobalMemberCsvImportScreenState
 
     // Find column indices — support both Amharic and English headers
     int nameIdx = _findCol(headers, ['ሙሉ ስም', 'full name', 'name', 'ስም']);
+    int christianIdx = _findCol(headers, ['የክርስትና ስም', 'christian name', 'baptism name', 'ክርስትና ስም']);
     int phoneIdx = _findCol(headers, ['ስልክ', 'phone', 'ስልክ ቁጥር']);
+    int phone2Idx = _findCol(headers, ['ስልክ 2', 'phone 2', 'phone2', 'ተጨማሪ ስልክ']);
     int codeIdx = _findCol(headers, [
       'ኮድ',
       'code',
@@ -154,13 +156,25 @@ class _GlobalMemberCsvImportScreenState
       final name = row[nameIdx].toString().trim();
       if (name.isEmpty) continue;
 
+      final christianName = christianIdx >= 0 && christianIdx < row.length
+          ? row[christianIdx].toString().trim()
+          : '';
+
       var phone =
           phoneIdx < row.length ? row[phoneIdx].toString().trim() : '';
-      // Ensure phone starts with 0 (handles XLSX storing as number)
       if (phone.isNotEmpty &&
           !phone.startsWith('0') &&
           !phone.startsWith('+')) {
         phone = '0$phone';
+      }
+
+      var phone2 = phone2Idx >= 0 && phone2Idx < row.length
+          ? row[phone2Idx].toString().trim()
+          : '';
+      if (phone2.isNotEmpty &&
+          !phone2.startsWith('0') &&
+          !phone2.startsWith('+')) {
+        phone2 = '0$phone2';
       }
 
       final code =
@@ -170,7 +184,9 @@ class _GlobalMemberCsvImportScreenState
 
       members.add(AppUser(
         displayName: name,
+        christianName: christianName,
         phone: phone,
+        phone2: phone2,
         passwordCode: code,
         areaId: AppConstants.defaultAreaId,
         role: UserRole.member,
@@ -239,8 +255,8 @@ class _GlobalMemberCsvImportScreenState
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'CSV: ሙሉ ስም, ስልክ, ኮድ\n'
-                            'XLSX: ሙሉ ስም, ስልክ (የመጀመሪያው ሺት)',
+                            'CSV: ሙሉ ስም, የክርስትና ስም, ስልክ, ስልክ 2, ኮድ\n'
+                            'XLSX: ሙሉ ስም, የክርስትና ስም, ስልክ, ስልክ 2 (የመጀመሪያው ሺት)',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppTheme.textMuted.withValues(alpha: 0.7),
@@ -300,7 +316,11 @@ class _GlobalMemberCsvImportScreenState
                               child: Text('${index + 1}'),
                             ),
                             title: Text(m.displayName),
-                            subtitle: Text(m.phone),
+                            subtitle: Text(
+                              [m.christianName, m.phone]
+                                  .where((s) => s.isNotEmpty)
+                                  .join(' · '),
+                            ),
                             dense: true,
                           );
                         },

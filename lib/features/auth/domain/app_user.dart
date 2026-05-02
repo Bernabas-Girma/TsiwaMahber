@@ -86,7 +86,9 @@ class AppUser {
   final String uid;
   final String email;
   final String displayName;
+  final String christianName;
   final String phone;
+  final String phone2;
   final String passwordCode;
   final UserRole role;
   final String areaId;
@@ -111,7 +113,9 @@ class AppUser {
     this.uid = '',
     this.email = '',
     this.displayName = '',
+    this.christianName = '',
     this.phone = '',
+    this.phone2 = '',
     this.passwordCode = '',
     this.role = UserRole.viewer,
     this.areaId = '',
@@ -140,7 +144,9 @@ class AppUser {
       uid: doc.id,
       email: data['email'] as String? ?? '',
       displayName: data['displayName'] as String? ?? '',
+      christianName: data['christianName'] as String? ?? '',
       phone: data['phone'] as String? ?? '',
+      phone2: data['phone2'] as String? ?? '',
       passwordCode: data['passwordCode'] as String? ?? '',
       role: UserRole.fromString(data['role'] as String?),
       areaId: data['areaId'] as String? ?? '',
@@ -163,7 +169,9 @@ class AppUser {
       uid: docId,
       email: data['email'] as String? ?? '',
       displayName: data['displayName'] as String? ?? '',
+      christianName: data['christianName'] as String? ?? '',
       phone: data['phone'] as String? ?? '',
+      phone2: data['phone2'] as String? ?? '',
       passwordCode: data['passwordCode'] as String? ?? '',
       role: UserRole.fromString(data['role'] as String?),
       areaId: data['areaId'] as String? ?? '',
@@ -185,7 +193,9 @@ class AppUser {
     return {
       'email': email,
       'displayName': displayName,
+      'christianName': christianName,
       'phone': phone,
+      'phone2': phone2,
       'passwordCode': passwordCode,
       'role': role.firestoreValue,
       'areaId': areaId,
@@ -203,7 +213,9 @@ class AppUser {
   Map<String, dynamic> toUpdateMap() {
     return {
       'displayName': displayName,
+      'christianName': christianName,
       'phone': phone,
+      'phone2': phone2,
       'updatedAt': FieldValue.serverTimestamp(),
     };
   }
@@ -211,7 +223,9 @@ class AppUser {
   Map<String, dynamic> toFullUpdateMap() {
     return {
       'displayName': displayName,
+      'christianName': christianName,
       'phone': phone,
+      'phone2': phone2,
       'passwordCode': passwordCode,
       'role': role.firestoreValue,
       'areaId': areaId,
@@ -228,7 +242,9 @@ class AppUser {
     String? uid,
     String? email,
     String? displayName,
+    String? christianName,
     String? phone,
+    String? phone2,
     String? passwordCode,
     UserRole? role,
     String? areaId,
@@ -243,7 +259,9 @@ class AppUser {
       uid: uid ?? this.uid,
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
+      christianName: christianName ?? this.christianName,
       phone: phone ?? this.phone,
+      phone2: phone2 ?? this.phone2,
       passwordCode: passwordCode ?? this.passwordCode,
       role: role ?? this.role,
       areaId: areaId ?? this.areaId,

@@ -23,7 +23,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _authRepository = AuthRepository();
 
   late final TextEditingController _nameController;
+  late final TextEditingController _christianNameController;
   late final TextEditingController _phoneController;
+  late final TextEditingController _phone2Controller;
   bool _isSaving = false;
 
   bool get _canEdit => widget.user.role.isDeveloper;
@@ -33,14 +35,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _nameController =
         TextEditingController(text: widget.user.displayName);
+    _christianNameController =
+        TextEditingController(text: widget.user.christianName);
     _phoneController =
         TextEditingController(text: widget.user.phone);
+    _phone2Controller =
+        TextEditingController(text: widget.user.phone2);
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _christianNameController.dispose();
     _phoneController.dispose();
+    _phone2Controller.dispose();
     super.dispose();
   }
 
@@ -78,6 +86,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: const TextStyle(
                         fontSize: 20, fontWeight: FontWeight.bold),
                   ),
+                  if (widget.user.christianName.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.user.christianName,
+                      style: const TextStyle(
+                          fontSize: 14, color: AppTheme.textMuted),
+                    ),
+                  ],
                   const SizedBox(height: 4),
                   Text(
                     widget.user.email,
@@ -134,10 +150,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
+                        controller: _christianNameController,
+                        decoration: InputDecoration(
+                          labelText: S.christianName,
+                          prefixIcon: Icon(Icons.church_outlined),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
                         controller: _phoneController,
                         decoration: InputDecoration(
                           labelText: S.phone,
                           prefixIcon: Icon(Icons.phone_outlined),
+                        ),
+                        keyboardType: TextInputType.phone,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _phone2Controller,
+                        decoration: InputDecoration(
+                          labelText: S.additionalPhone,
+                          prefixIcon: Icon(Icons.phone_outlined),
+                          hintText: S.optionalField,
                         ),
                         keyboardType: TextInputType.phone,
                       ),
@@ -195,7 +229,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await _authRepository.updateProfile(
         uid: widget.user.uid,
         displayName: _nameController.text.trim(),
+        christianName: _christianNameController.text.trim(),
         phone: _phoneController.text.trim(),
+        phone2: _phone2Controller.text.trim(),
       );
 
       if (mounted) {
