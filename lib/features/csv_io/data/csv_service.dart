@@ -490,7 +490,7 @@ class CsvService {
     if (sheet == null) return rows;
 
     for (final row in sheet.rows) {
-      final values = row.map((cell) {
+      final values = row.map<String>((cell) {
         if (cell == null || cell.value == null) return '';
         final v = cell.value;
         if (v is IntCellValue) return v.value.toString();
