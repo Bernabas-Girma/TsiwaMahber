@@ -13,11 +13,7 @@ class TsiwaListScreen extends StatefulWidget {
   final String areaId;
   final String? areaName;
 
-  const TsiwaListScreen({
-    super.key,
-    required this.areaId,
-    this.areaName,
-  });
+  const TsiwaListScreen({super.key, required this.areaId, this.areaName});
 
   @override
   State<TsiwaListScreen> createState() => _TsiwaListScreenState();
@@ -29,9 +25,7 @@ class _TsiwaListScreenState extends State<TsiwaListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(S.tsiwaGroups),
-      ),
+      appBar: AppBar(title: Text(S.tsiwaGroups)),
       body: StreamBuilder<List<TsiwaMahber>>(
         stream: _tsiwaRepository.watchTsiwas(widget.areaId),
         builder: (context, snapshot) {
@@ -95,10 +89,8 @@ class _TsiwaListScreenState extends State<TsiwaListScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => TsiwaDetailScreen(
-          areaId: widget.areaId,
-          tsiwaId: tsiwa.id,
-        ),
+        builder: (context) =>
+            TsiwaDetailScreen(areaId: widget.areaId, tsiwaId: tsiwa.id),
       ),
     );
   }
@@ -108,10 +100,7 @@ class _TsiwaCard extends StatelessWidget {
   final TsiwaMahber tsiwa;
   final VoidCallback onTap;
 
-  const _TsiwaCard({
-    required this.tsiwa,
-    required this.onTap,
-  });
+  const _TsiwaCard({required this.tsiwa, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -151,9 +140,7 @@ class _TsiwaCard extends StatelessWidget {
                         tsiwa.isArchived ? S.archive : S.stopped,
                         style: TextStyle(
                           fontSize: 11,
-                          color: tsiwa.isArchived
-                              ? Colors.orange
-                              : Colors.red,
+                          color: tsiwa.isArchived ? Colors.orange : Colors.red,
                         ),
                       ),
                     ),
@@ -163,9 +150,10 @@ class _TsiwaCard extends StatelessWidget {
                   tsiwa.saintName.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Text(
-                  [tsiwa.churchName, tsiwa.saintName]
-                      .where((s) => s.isNotEmpty)
-                      .join(' - '),
+                  [
+                    tsiwa.churchName,
+                    tsiwa.saintName,
+                  ].where((s) => s.isNotEmpty).join(' - '),
                   style: const TextStyle(
                     fontSize: 13,
                     color: AppTheme.textMuted,
@@ -201,17 +189,12 @@ class _TsiwaCard extends StatelessWidget {
                     'ፅዋ ቀን ${tsiwa.monthlyTsiwaDay}',
                     AppTheme.primary,
                   ),
-                  if (tsiwa.zikirMonth != null && tsiwa.zikirDay != null)
-                    _buildDayChip(
-                      'ዝክር ${AppConstants.ethiopianMonthName(tsiwa.zikirMonth!)} ${tsiwa.zikirDay}',
+                  ...tsiwa.yearlyZikir.map(
+                    (entry) => _buildDayChip(
+                      '${AppConstants.ethiopianMonthName(entry.month)} ${entry.day}',
                       AppTheme.secondary,
                     ),
-                  if (tsiwa.feedingMonth != null &&
-                      tsiwa.feedingDay != null)
-                    _buildDayChip(
-                      'ማብላት ${AppConstants.ethiopianMonthName(tsiwa.feedingMonth!)} ${tsiwa.feedingDay}',
-                      Colors.teal,
-                    ),
+                  ),
                 ],
               ),
             ],

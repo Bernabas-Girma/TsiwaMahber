@@ -73,7 +73,7 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
                 const SizedBox(height: 16),
                 _buildMonthlyTsiwaSection(tsiwa),
                 const SizedBox(height: 16),
-                _buildZikirFeedingSection(tsiwa),
+                _buildYearlyZikirSection(tsiwa),
                 const SizedBox(height: 16),
                 _buildStatusSection(tsiwa),
                 const SizedBox(height: 16),
@@ -115,70 +115,66 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
       icon: Icons.calendar_today,
       iconColor: AppTheme.primary,
       children: [
-        _InfoRow(
-          label: S.day,
-          value: 'በየወሩ ${tsiwa.monthlyTsiwaDay}',
-        ),
+        _InfoRow(label: S.day, value: 'በየወሩ ${tsiwa.monthlyTsiwaDay}'),
         if (tsiwa.monthlyTsiwaDayNote.isNotEmpty)
           _InfoRow(label: S.note, value: tsiwa.monthlyTsiwaDayNote),
       ],
     );
   }
 
-  Widget _buildZikirFeedingSection(TsiwaMahber tsiwa) {
-    final hasZikir = tsiwa.zikirMonth != null && tsiwa.zikirDay != null;
-    final hasFeeding =
-        tsiwa.feedingMonth != null && tsiwa.feedingDay != null;
-
-    if (!hasZikir && !hasFeeding) {
+  Widget _buildYearlyZikirSection(TsiwaMahber tsiwa) {
+    if (tsiwa.yearlyZikir.isEmpty) {
       return _SectionCard(
-        title: S.zikirFeedingSection,
-        icon: Icons.restaurant,
+        title: S.yearlyZikirTitle,
+        icon: Icons.auto_awesome,
         children: [
           Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
-              S.noZikirOrFeeding,
-              style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+              S.noYearlyZikirYet,
+              style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
             ),
           ),
         ],
       );
     }
 
-    return Column(
+    return _SectionCard(
+      title: S.yearlyZikirTitle,
+      icon: Icons.auto_awesome,
+      iconColor: AppTheme.secondary,
       children: [
-        if (hasZikir)
-          _SectionCard(
-            title: tsiwa.zikirTitle,
-            icon: Icons.auto_awesome,
-            iconColor: AppTheme.secondary,
-            children: [
-              _InfoRow(
-                label: S.day,
-                value:
-                    '${AppConstants.ethiopianMonthName(tsiwa.zikirMonth!)} ${tsiwa.zikirDay}',
-              ),
-              if (tsiwa.zikirNote.isNotEmpty)
-                _InfoRow(label: S.note, value: tsiwa.zikirNote),
-            ],
-          ),
-        if (hasZikir && hasFeeding) const SizedBox(height: 16),
-        if (hasFeeding)
-          _SectionCard(
-            title: tsiwa.feedingTitle,
-            icon: Icons.restaurant,
-            iconColor: Colors.teal,
-            children: [
-              _InfoRow(
-                label: S.day,
-                value:
-                    '${AppConstants.ethiopianMonthName(tsiwa.feedingMonth!)} ${tsiwa.feedingDay}',
-              ),
-              if (tsiwa.feedingNote.isNotEmpty)
-                _InfoRow(label: S.note, value: tsiwa.feedingNote),
-            ],
-          ),
+        ...tsiwa.yearlyZikir.map((entry) {
+          final monthName = AppConstants.ethiopianMonthName(entry.month);
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                const Icon(Icons.event, size: 16, color: AppTheme.secondary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$monthName ${entry.day}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      if (entry.note.isNotEmpty)
+                        Text(
+                          entry.note,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
       ],
     );
   }
@@ -193,10 +189,7 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
           value: tsiwa.isActive ? 'አዎ' : 'አይ',
           valueColor: tsiwa.isActive ? AppTheme.success : Colors.red,
         ),
-        _InfoRow(
-          label: S.archive,
-          value: tsiwa.isArchived ? 'አዎ' : 'አይ',
-        ),
+        _InfoRow(label: S.archive, value: tsiwa.isArchived ? 'አዎ' : 'አይ'),
       ],
     );
   }
@@ -207,8 +200,11 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
       builder: (context, snapshot) {
         final members = snapshot.data ?? [];
         final museCount = members
-            .where((m) => m.tsiwaRoles[widget.tsiwaId] == 'muse' ||
-                m.tsiwaRoles[widget.tsiwaId] == 'assistant_muse')
+            .where(
+              (m) =>
+                  m.tsiwaRoles[widget.tsiwaId] == 'muse' ||
+                  m.tsiwaRoles[widget.tsiwaId] == 'assistant_muse',
+            )
             .length;
 
         return _SectionCard(
@@ -236,8 +232,7 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
                   S.noMembersYet,
-                  style: TextStyle(
-                      color: AppTheme.textMuted, fontSize: 13),
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
                 ),
               )
             else
@@ -277,18 +272,14 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
             ),
           ),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
               color: AppTheme.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               roleLabel,
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppTheme.primary,
-              ),
+              style: const TextStyle(fontSize: 11, color: AppTheme.primary),
             ),
           ),
         ],
@@ -298,38 +289,30 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
 
   Widget _buildScheduleSection(TsiwaMahber tsiwa) {
     final ethToday = EthiopianCalendar.today();
-    final tswaDays = EthiopianCalendar.daysUntilMonthlyDay(tsiwa.monthlyTsiwaDay);
-
-    final hasZikir = tsiwa.zikirMonth != null && tsiwa.zikirDay != null;
-    final hasFeeding = tsiwa.feedingMonth != null && tsiwa.feedingDay != null;
+    final tswaDays = EthiopianCalendar.daysUntilMonthlyDay(
+      tsiwa.monthlyTsiwaDay,
+    );
 
     return _SectionCard(
       title: S.calendar,
       icon: Icons.schedule,
       iconColor: Colors.teal,
       children: [
-        _InfoRow(
-          label: 'ዛሬ',
-          value: ethToday.formatted,
-        ),
+        _InfoRow(label: 'ዛሬ', value: ethToday.formatted),
         const SizedBox(height: 8),
         _buildCountdownChip(
           'ፅዋ ቀን ${tsiwa.monthlyTsiwaDay}',
           tswaDays,
           AppTheme.primary,
         ),
-        if (hasZikir)
-          _buildCountdownChip(
-            '${tsiwa.zikirTitle} (${AppConstants.ethiopianMonthName(tsiwa.zikirMonth!)} ${tsiwa.zikirDay})',
-            EthiopianCalendar.daysUntilDate(tsiwa.zikirMonth!, tsiwa.zikirDay!),
+        ...tsiwa.yearlyZikir.map((entry) {
+          final monthName = AppConstants.ethiopianMonthName(entry.month);
+          return _buildCountdownChip(
+            '${S.yearlyZikirTitle} ($monthName ${entry.day})',
+            EthiopianCalendar.daysUntilDate(entry.month, entry.day),
             AppTheme.secondary,
-          ),
-        if (hasFeeding)
-          _buildCountdownChip(
-            '${tsiwa.feedingTitle} (${AppConstants.ethiopianMonthName(tsiwa.feedingMonth!)} ${tsiwa.feedingDay})',
-            EthiopianCalendar.daysUntilDate(tsiwa.feedingMonth!, tsiwa.feedingDay!),
-            Colors.teal,
-          ),
+          );
+        }),
       ],
     );
   }
@@ -340,12 +323,7 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
+          Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
@@ -415,18 +393,12 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
                     SizedBox(height: 2),
                     Text(
                       S.rotationOrder,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textMuted,
-                      ),
+                      style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
                     ),
                   ],
                 ),
               ),
-              const Icon(
-                Icons.chevron_right,
-                color: AppTheme.textMuted,
-              ),
+              const Icon(Icons.chevron_right, color: AppTheme.textMuted),
             ],
           ),
         ),
@@ -438,10 +410,8 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => TsiwaFormScreen(
-          areaId: widget.areaId,
-          existingTsiwa: tsiwa,
-        ),
+        builder: (context) =>
+            TsiwaFormScreen(areaId: widget.areaId, existingTsiwa: tsiwa),
       ),
     );
   }
@@ -463,9 +433,9 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(S.dataDeleteFailed)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(S.dataDeleteFailed)));
         }
       }
     }
@@ -520,11 +490,7 @@ class _InfoRow extends StatelessWidget {
   final String value;
   final Color? valueColor;
 
-  const _InfoRow({
-    required this.label,
-    required this.value,
-    this.valueColor,
-  });
+  const _InfoRow({required this.label, required this.value, this.valueColor});
 
   @override
   Widget build(BuildContext context) {
@@ -537,19 +503,13 @@ class _InfoRow extends StatelessWidget {
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppTheme.textMuted,
-              ),
+              style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: TextStyle(
-                fontSize: 14,
-                color: valueColor,
-              ),
+              style: TextStyle(fontSize: 14, color: valueColor),
             ),
           ),
         ],

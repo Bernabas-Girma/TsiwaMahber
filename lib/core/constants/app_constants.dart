@@ -25,11 +25,10 @@ class AppConstants {
     'ሰኔ',
     'ሐምሌ',
     'ነሐሴ',
-    'ጳጉሜ',
   ];
 
   static String ethiopianMonthName(int month) {
-    if (month < 1 || month > 13) return '';
+    if (month < 1 || month > 12) return '';
     return ethiopianMonths[month - 1];
   }
 }

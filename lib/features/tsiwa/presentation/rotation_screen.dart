@@ -62,10 +62,7 @@ class _RotationScreenState extends State<RotationScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
-          _buildRotationOrder(),
-          _buildEventHistory(),
-        ],
+        children: [_buildRotationOrder(), _buildEventHistory()],
       ),
     );
   }
@@ -75,8 +72,7 @@ class _RotationScreenState extends State<RotationScreen>
       stream: _tsiwaRepository.watchTsiwa(widget.areaId, widget.tsiwaId),
       builder: (context, tsiwaSnapshot) {
         return StreamBuilder<List<Member>>(
-          stream: _memberRepository.watchMembers(
-              widget.areaId, widget.tsiwaId),
+          stream: _memberRepository.watchMembers(widget.areaId, widget.tsiwaId),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return LoadingState(message: S.loading);
@@ -95,21 +91,15 @@ class _RotationScreenState extends State<RotationScreen>
               );
             }
 
-            final currentIndex =
-                tsiwaSnapshot.data?.currentRotationIndex ?? 0;
+            final currentIndex = tsiwaSnapshot.data?.currentRotationIndex ?? 0;
             final safeIndex = currentIndex < rotationMembers.length
                 ? currentIndex
                 : 0;
-            final nextIndex =
-                (safeIndex + 1) % rotationMembers.length;
+            final nextIndex = (safeIndex + 1) % rotationMembers.length;
 
             return Column(
               children: [
-                _buildCurrentNextCard(
-                  rotationMembers,
-                  safeIndex,
-                  nextIndex,
-                ),
+                _buildCurrentNextCard(rotationMembers, safeIndex, nextIndex),
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.only(bottom: 80),
@@ -121,7 +111,9 @@ class _RotationScreenState extends State<RotationScreen>
 
                       return Card(
                         margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         color: isCurrent
                             ? AppTheme.primary.withValues(alpha: 0.1)
                             : null,
@@ -130,8 +122,8 @@ class _RotationScreenState extends State<RotationScreen>
                             backgroundColor: isCurrent
                                 ? AppTheme.primary
                                 : isNext
-                                    ? Colors.teal
-                                    : AppTheme.surface,
+                                ? Colors.teal
+                                : AppTheme.surface,
                             child: Text(
                               '${member.orderIndex}',
                               style: TextStyle(
@@ -169,16 +161,17 @@ class _RotationScreenState extends State<RotationScreen>
                                   ),
                                 )
                               : isNext
-                                  ? Chip(
-                                      label: Text(S.next),
-                                      backgroundColor: Colors.teal
-                                          .withValues(alpha: 0.3),
-                                      labelStyle: const TextStyle(
-                                        color: Colors.teal,
-                                        fontSize: 11,
-                                      ),
-                                    )
-                                  : null,
+                              ? Chip(
+                                  label: Text(S.next),
+                                  backgroundColor: Colors.teal.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                  labelStyle: const TextStyle(
+                                    color: Colors.teal,
+                                    fontSize: 11,
+                                  ),
+                                )
+                              : null,
                           onTap: () => _setCurrentRotation(index),
                         ),
                       );
@@ -194,7 +187,10 @@ class _RotationScreenState extends State<RotationScreen>
   }
 
   Widget _buildCurrentNextCard(
-      List<Member> members, int currentIdx, int nextIdx) {
+    List<Member> members,
+    int currentIdx,
+    int nextIdx,
+  ) {
     final current = members[currentIdx];
     final next = members[nextIdx];
 
@@ -211,10 +207,7 @@ class _RotationScreenState extends State<RotationScreen>
                   const SizedBox(height: 4),
                   Text(
                     S.currentTurn,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppTheme.textMuted,
-                    ),
+                    style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -232,15 +225,15 @@ class _RotationScreenState extends State<RotationScreen>
             Expanded(
               child: Column(
                 children: [
-                  const Icon(Icons.person_outline,
-                      color: Colors.teal, size: 28),
+                  const Icon(
+                    Icons.person_outline,
+                    color: Colors.teal,
+                    size: 28,
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     S.nextTurn,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppTheme.textMuted,
-                    ),
+                    style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -273,17 +266,16 @@ class _RotationScreenState extends State<RotationScreen>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.rotationUpdateFailed)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(S.rotationUpdateFailed)));
       }
     }
   }
 
   Widget _buildEventHistory() {
     return StreamBuilder<List<TsiwaEvent>>(
-      stream: _eventRepository.watchRecentEvents(
-          widget.areaId, widget.tsiwaId),
+      stream: _eventRepository.watchRecentEvents(widget.areaId, widget.tsiwaId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return LoadingState(message: S.loading);
@@ -314,8 +306,8 @@ class _RotationScreenState extends State<RotationScreen>
                   final event = events[index];
                   return _EventCard(
                     event: event,
-                    onStatusChange: (status) => _updateEventStatus(
-                        event.id, status),
+                    onStatusChange: (status) =>
+                        _updateEventStatus(event.id, status),
                   );
                 },
               ),
@@ -362,27 +354,36 @@ class _RotationScreenState extends State<RotationScreen>
     if (result != null) {
       try {
         await _eventRepository.createEvent(
-            widget.areaId, widget.tsiwaId, result);
+          widget.areaId,
+          widget.tsiwaId,
+          result,
+        );
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(S.eventRecordFailed)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(S.eventRecordFailed)));
         }
       }
     }
   }
 
   Future<void> _updateEventStatus(
-      String eventId, TsiwaEventStatus status) async {
+    String eventId,
+    TsiwaEventStatus status,
+  ) async {
     try {
       await _eventRepository.updateEventStatus(
-          widget.areaId, widget.tsiwaId, eventId, status);
+        widget.areaId,
+        widget.tsiwaId,
+        eventId,
+        status,
+      );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.statusUpdateFailed)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(S.statusUpdateFailed)));
       }
     }
   }
@@ -392,10 +393,7 @@ class _EventCard extends StatelessWidget {
   final TsiwaEvent event;
   final ValueChanged<TsiwaEventStatus> onStatusChange;
 
-  const _EventCard({
-    required this.event,
-    required this.onStatusChange,
-  });
+  const _EventCard({required this.event, required this.onStatusChange});
 
   @override
   Widget build(BuildContext context) {
@@ -422,8 +420,10 @@ class _EventCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
@@ -460,18 +460,17 @@ class _EventCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 event.notes,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.textMuted,
-                ),
+                style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
               ),
             ],
             const SizedBox(height: 8),
             Row(
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -490,15 +489,13 @@ class _EventCard extends StatelessWidget {
                   _StatusButton(
                     label: S.completed,
                     color: AppTheme.success,
-                    onTap: () =>
-                        onStatusChange(TsiwaEventStatus.completed),
+                    onTap: () => onStatusChange(TsiwaEventStatus.completed),
                   ),
                   const SizedBox(width: 8),
                   _StatusButton(
                     label: S.cancelled,
                     color: Colors.red,
-                    onTap: () =>
-                        onStatusChange(TsiwaEventStatus.cancelled),
+                    onTap: () => onStatusChange(TsiwaEventStatus.cancelled),
                   ),
                 ],
               ],
@@ -532,10 +529,7 @@ class _StatusButton extends StatelessWidget {
           border: Border.all(color: color.withValues(alpha: 0.5)),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Text(
-          label,
-          style: TextStyle(fontSize: 11, color: color),
-        ),
+        child: Text(label, style: TextStyle(fontSize: 11, color: color)),
       ),
     );
   }
@@ -591,24 +585,25 @@ class _CreateEventDialogState extends State<_CreateEventDialog> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: [
-                TsiwaEventType.monthlyTsiwa,
-                TsiwaEventType.zikir,
-                TsiwaEventType.feedingDay,
-              ].map((type) {
-                final isSelected = _type == type;
-                return ChoiceChip(
-                  label: Text(type.displayName),
-                  selected: isSelected,
-                  onSelected: (s) {
-                    if (s) setState(() => _type = type);
-                  },
-                  selectedColor: AppTheme.primary.withValues(alpha: 0.3),
-                  labelStyle: TextStyle(
-                    color: isSelected ? AppTheme.primary : AppTheme.textMuted,
-                  ),
-                );
-              }).toList(),
+              children:
+                  [TsiwaEventType.monthlyTsiwa, TsiwaEventType.yearlyZikir].map(
+                    (type) {
+                      final isSelected = _type == type;
+                      return ChoiceChip(
+                        label: Text(type.displayName),
+                        selected: isSelected,
+                        onSelected: (s) {
+                          if (s) setState(() => _type = type);
+                        },
+                        selectedColor: AppTheme.primary.withValues(alpha: 0.3),
+                        labelStyle: TextStyle(
+                          color: isSelected
+                              ? AppTheme.primary
+                              : AppTheme.textMuted,
+                        ),
+                      );
+                    },
+                  ).toList(),
             ),
             const SizedBox(height: 16),
             Text(
@@ -632,13 +627,15 @@ class _CreateEventDialogState extends State<_CreateEventDialog> {
                   ),
                 ),
                 items: widget.members
-                    .map((m) => DropdownMenuItem(
-                          value: m,
-                          child: Text(
-                            '${m.orderIndex}. ${m.fullName}',
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                        ))
+                    .map(
+                      (m) => DropdownMenuItem(
+                        value: m,
+                        child: Text(
+                          '${m.orderIndex}. ${m.fullName}',
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    )
                     .toList(),
                 onChanged: (m) => setState(() => _selectedMember = m),
               ),
@@ -646,9 +643,7 @@ class _CreateEventDialogState extends State<_CreateEventDialog> {
             const SizedBox(height: 16),
             TextField(
               controller: _notesController,
-              decoration: InputDecoration(
-                labelText: S.note,
-              ),
+              decoration: InputDecoration(labelText: S.note),
               maxLines: 2,
             ),
           ],
@@ -667,8 +662,7 @@ class _CreateEventDialogState extends State<_CreateEventDialog> {
               ethiopianMonth: widget.ethToday.month,
               ethiopianDay: widget.ethToday.day,
               responsibleMemberId: _selectedMember?.id ?? '',
-              responsibleMemberNameSnapshot:
-                  _selectedMember?.fullName ?? '',
+              responsibleMemberNameSnapshot: _selectedMember?.fullName ?? '',
               status: TsiwaEventStatus.planned,
               notes: _notesController.text.trim(),
             );
