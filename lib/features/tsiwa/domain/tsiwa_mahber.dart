@@ -88,7 +88,7 @@ class TsiwaMahber {
 
     // Migration: if old zikirMonth/zikirDay or feedingMonth/feedingDay exist,
     // include them in the yearlyZikir list for backward compatibility
-    if (yearlyZikirList.isEmpty) {
+    if (yearlyZikirRaw == null) {
       final zikirMonth = data['zikirMonth'] as int?;
       final zikirDay = data['zikirDay'] as int?;
       if (zikirMonth != null && zikirDay != null) {
