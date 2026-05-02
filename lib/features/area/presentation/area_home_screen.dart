@@ -476,67 +476,75 @@ class _AreaHomeScreenState extends State<AreaHomeScreen> {
   Widget _buildDashboardStats() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: StreamBuilder<List<TsiwaMahber>>(
-              stream: _tsiwaRepository.watchTsiwas(widget.areaId),
-              builder: (context, snapshot) {
-                final count = snapshot.data?.length ?? 0;
-                return _StatCard(
-                  label: S.tsiwaGroups,
-                  value: count.toString(),
-                  icon: Icons.groups,
-                  color: AppTheme.primary,
-                );
-              },
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: StreamBuilder<List<TsiwaMahber>>(
+                  stream: _tsiwaRepository.watchTsiwas(widget.areaId),
+                  builder: (context, snapshot) {
+                    final count = snapshot.data?.length ?? 0;
+                    return _StatCard(
+                      label: S.tsiwaGroups,
+                      value: count.toString(),
+                      icon: Icons.groups,
+                      color: AppTheme.primary,
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: StreamBuilder<List<Leader>>(
+                  stream: _leaderRepository.watchLeaders(widget.areaId),
+                  builder: (context, snapshot) {
+                    final count = snapshot.data?.length ?? 0;
+                    return _StatCard(
+                      label: S.leaders,
+                      value: count.toString(),
+                      icon: Icons.admin_panel_settings,
+                      color: AppTheme.secondary,
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: StreamBuilder<List<Leader>>(
-              stream: _leaderRepository.watchLeaders(widget.areaId),
-              builder: (context, snapshot) {
-                final count = snapshot.data?.length ?? 0;
-                return _StatCard(
-                  label: S.leaders,
-                  value: count.toString(),
-                  icon: Icons.admin_panel_settings,
-                  color: AppTheme.secondary,
-                );
-              },
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: StreamBuilder<List<Edir>>(
-              stream: _edirRepository.watchEdirs(widget.areaId),
-              builder: (context, snapshot) {
-                final count = snapshot.data?.length ?? 0;
-                return _StatCard(
-                  label: S.edir,
-                  value: count.toString(),
-                  icon: Icons.account_balance_wallet,
-                  color: Colors.purple,
-                );
-              },
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: StreamBuilder<List<Announcement>>(
-              stream: _announcementRepository.watchAnnouncements(
-                  widget.areaId),
-              builder: (context, snapshot) {
-                final count = snapshot.data?.length ?? 0;
-                return _StatCard(
-                  label: S.announcement,
-                  value: count.toString(),
-                  icon: Icons.campaign,
-                  color: Colors.teal,
-                );
-              },
-            ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: StreamBuilder<List<Edir>>(
+                  stream: _edirRepository.watchEdirs(widget.areaId),
+                  builder: (context, snapshot) {
+                    final count = snapshot.data?.length ?? 0;
+                    return _StatCard(
+                      label: S.edir,
+                      value: count.toString(),
+                      icon: Icons.account_balance_wallet,
+                      color: Colors.purple,
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: StreamBuilder<List<Announcement>>(
+                  stream: _announcementRepository.watchAnnouncements(
+                      widget.areaId),
+                  builder: (context, snapshot) {
+                    final count = snapshot.data?.length ?? 0;
+                    return _StatCard(
+                      label: S.announcement,
+                      value: count.toString(),
+                      icon: Icons.campaign,
+                      color: Colors.teal,
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -581,6 +589,9 @@ class _StatCard extends StatelessWidget {
                 fontSize: 12,
                 color: AppTheme.textMuted,
               ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

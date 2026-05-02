@@ -49,8 +49,13 @@ class AuthRepository {
     // Sign in anonymously so the member gets a Firebase Auth token.
     // This satisfies Firestore security rules (request.auth != null)
     // for writes like payment recording by Edir አመራር.
-    if (_auth.currentUser == null) {
-      await _auth.signInAnonymously();
+    try {
+      if (_auth.currentUser == null) {
+        await _auth.signInAnonymously();
+      }
+    } catch (_) {
+      // Anonymous auth may be disabled in Firebase console.
+      // Member can still view data; Firestore writes will be denied.
     }
 
     return user;
@@ -230,20 +235,28 @@ class AuthRepository {
     return _firestore
         .collection('users')
         .where('assignedTsiwaIds', arrayContains: tsiwaId)
-        .orderBy('displayName')
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => AppUser.fromDoc(doc)).toList());
+        .map((snapshot) {
+      final users =
+          snapshot.docs.map((doc) => AppUser.fromDoc(doc)).toList();
+      users.sort(
+          (a, b) => a.displayName.compareTo(b.displayName));
+      return users;
+    });
   }
 
   Stream<List<AppUser>> watchMembersByEdir(String edirId) {
     return _firestore
         .collection('users')
         .where('assignedEdirIds', arrayContains: edirId)
-        .orderBy('displayName')
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => AppUser.fromDoc(doc)).toList());
+        .map((snapshot) {
+      final users =
+          snapshot.docs.map((doc) => AppUser.fromDoc(doc)).toList();
+      users.sort(
+          (a, b) => a.displayName.compareTo(b.displayName));
+      return users;
+    });
   }
 
   Future<void> deleteUser(String uid) async {
