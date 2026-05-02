@@ -8,14 +8,13 @@ import 'package:tsiwa_mahber/features/tsiwa/data/tsiwa_repository.dart';
 import 'package:tsiwa_mahber/features/tsiwa/domain/tsiwa_mahber.dart';
 import 'package:tsiwa_mahber/features/edir/data/edir_repository.dart';
 import 'package:tsiwa_mahber/features/edir/domain/edir.dart';
+import 'package:tsiwa_mahber/core/constants/app_constants.dart';
 
 class GlobalMemberFormScreen extends StatefulWidget {
-  final String areaId;
   final AppUser? existingMember;
 
   const GlobalMemberFormScreen({
     super.key,
-    required this.areaId,
     this.existingMember,
   });
 
@@ -66,10 +65,10 @@ class _GlobalMemberFormScreenState extends State<GlobalMemberFormScreen> {
   }
 
   Future<void> _loadData() async {
-    _tsiwaRepository.watchTsiwas(widget.areaId).first.then((tsiwas) {
+    _tsiwaRepository.watchTsiwas(AppConstants.defaultAreaId).first.then((tsiwas) {
       if (mounted) setState(() => _availableTsiwas = tsiwas);
     });
-    _edirRepository.watchEdirs(widget.areaId).first.then((edirs) {
+    _edirRepository.watchEdirs(AppConstants.defaultAreaId).first.then((edirs) {
       if (mounted) setState(() => _availableEdirs = edirs);
     });
   }
@@ -318,7 +317,7 @@ class _GlobalMemberFormScreenState extends State<GlobalMemberFormScreen> {
           displayName: _nameController.text.trim(),
           phone: _phoneController.text.trim(),
           passwordCode: _codeController.text,
-          areaId: widget.areaId,
+          areaId: AppConstants.defaultAreaId,
           role: role,
           assignedTsiwaIds: _selectedTsiwaIds.toList(),
           assignedEdirIds: _selectedEdirIds.toList(),

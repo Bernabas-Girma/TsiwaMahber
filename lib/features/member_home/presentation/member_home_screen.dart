@@ -53,7 +53,6 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
       ));
       pages.add(TsiwaMemberTab(
         currentUser: user,
-        areaId: user.areaId,
       ));
     }
 
@@ -64,7 +63,6 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
       ));
       pages.add(EdirMemberTab(
         currentUser: user,
-        areaId: user.areaId,
       ));
     }
 
