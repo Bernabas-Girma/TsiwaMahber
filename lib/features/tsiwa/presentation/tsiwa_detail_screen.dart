@@ -4,7 +4,8 @@ import 'package:tsiwa_mahber/core/theme/app_theme.dart';
 import 'package:tsiwa_mahber/core/utils/ethiopian_calendar.dart';
 import 'package:tsiwa_mahber/core/widgets/confirm_dialog.dart';
 import 'package:tsiwa_mahber/core/widgets/loading_state.dart';
-import 'package:tsiwa_mahber/features/members/presentation/member_list_screen.dart';
+import 'package:tsiwa_mahber/features/auth/data/auth_repository.dart';
+import 'package:tsiwa_mahber/features/auth/domain/app_user.dart';
 import 'package:tsiwa_mahber/features/tsiwa/data/tsiwa_repository.dart';
 import 'package:tsiwa_mahber/features/tsiwa/domain/tsiwa_mahber.dart';
 import 'package:tsiwa_mahber/features/tsiwa/presentation/rotation_screen.dart';
@@ -27,6 +28,7 @@ class TsiwaDetailScreen extends StatefulWidget {
 
 class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
   final _tsiwaRepository = TsiwaRepository();
+  final _authRepository = AuthRepository();
 
   @override
   Widget build(BuildContext context) {
@@ -200,67 +202,96 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
   }
 
   Widget _buildMembersSection(TsiwaMahber tsiwa) {
-    return Card(
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => MemberListScreen(
-                areaId: widget.areaId,
-                tsiwaId: widget.tsiwaId,
-                tsiwaName: tsiwa.name,
+    return StreamBuilder<List<AppUser>>(
+      stream: _authRepository.watchMembersByTsiwa(widget.tsiwaId),
+      builder: (context, snapshot) {
+        final members = snapshot.data ?? [];
+        final museCount = members
+            .where((m) => m.tsiwaRoles[widget.tsiwaId] == 'muse' ||
+                m.tsiwaRoles[widget.tsiwaId] == 'assistant_muse')
+            .length;
+
+        return _SectionCard(
+          title: S.members,
+          icon: Icons.people,
+          iconColor: AppTheme.primary,
+          children: [
+            _InfoRow(
+              label: S.total,
+              value: '${members.length} አባላት · $museCount ሙሴ',
+            ),
+            if (snapshot.connectionState == ConnectionState.waiting)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Center(
+                  child: SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              )
+            else if (members.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  S.noMembersYet,
+                  style: TextStyle(
+                      color: AppTheme.textMuted, fontSize: 13),
+                ),
+              )
+            else
+              ...members.map((member) => _buildMemberTile(member)),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildMemberTile(AppUser member) {
+    final role = member.tsiwaRoles[widget.tsiwaId] ?? 'member';
+    String roleLabel;
+    IconData roleIcon;
+    switch (role) {
+      case 'muse':
+        roleLabel = 'ሙሴ';
+        roleIcon = Icons.star;
+      case 'assistant_muse':
+        roleLabel = 'ረዳት ሙሴ';
+        roleIcon = Icons.star_half;
+      default:
+        roleLabel = S.roleMember;
+        roleIcon = Icons.person;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(roleIcon, size: 18, color: AppTheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              member.displayName,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              roleLabel,
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppTheme.primary,
               ),
             ),
-          );
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.people,
-                  color: AppTheme.primary,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      S.members,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${tsiwa.memberCount} አባላት · ${tsiwa.museCount} ሙሴ',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(
-                Icons.chevron_right,
-                color: AppTheme.textMuted,
-              ),
-            ],
           ),
-        ),
+        ],
       ),
     );
   }
