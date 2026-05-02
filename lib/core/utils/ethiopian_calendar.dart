@@ -131,14 +131,16 @@ class EthiopianCalendar {
     int targetYear = now.year;
 
     final targetGreg = toGregorian(
-        EthiopianDate(year: targetYear, month: targetMonth, day: targetDay));
+      EthiopianDate(year: targetYear, month: targetMonth, day: targetDay),
+    );
     final nowGreg = DateTime.now();
     final todayGreg = DateTime(nowGreg.year, nowGreg.month, nowGreg.day);
 
     var diff = targetGreg.difference(todayGreg).inDays;
     if (diff < 0) {
-      final nextYearGreg = toGregorian(EthiopianDate(
-          year: targetYear + 1, month: targetMonth, day: targetDay));
+      final nextYearGreg = toGregorian(
+        EthiopianDate(year: targetYear + 1, month: targetMonth, day: targetDay),
+      );
       diff = nextYearGreg.difference(todayGreg).inDays;
     }
 
@@ -152,6 +154,5 @@ class EthiopianCalendar {
     return _am ? '$days ቀናት ቀርተዋል' : '$days days left';
   }
 
-  static bool get _am =>
-      LocaleProvider.instance.isAmharic;
+  static bool get _am => LocaleProvider.instance.isAmharic;
 }

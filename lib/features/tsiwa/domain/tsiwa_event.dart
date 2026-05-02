@@ -3,18 +3,15 @@ import 'package:tsiwa_mahber/core/l10n/app_strings.dart';
 
 enum TsiwaEventType {
   monthlyTsiwa,
-  zikir,
-  feedingDay,
+  yearlyZikir,
   other;
 
   String get displayName {
     switch (this) {
       case TsiwaEventType.monthlyTsiwa:
         return S.monthlyTsiwa;
-      case TsiwaEventType.zikir:
-        return S.zikir;
-      case TsiwaEventType.feedingDay:
-        return S.feeding;
+      case TsiwaEventType.yearlyZikir:
+        return S.yearlyZikirTitle;
       case TsiwaEventType.other:
         return S.other;
     }
@@ -24,10 +21,8 @@ enum TsiwaEventType {
     switch (this) {
       case TsiwaEventType.monthlyTsiwa:
         return 'monthly_tsiwa';
-      case TsiwaEventType.zikir:
-        return 'zikir';
-      case TsiwaEventType.feedingDay:
-        return 'feeding_day';
+      case TsiwaEventType.yearlyZikir:
+        return 'yearly_zikir';
       case TsiwaEventType.other:
         return 'other';
     }
@@ -37,10 +32,10 @@ enum TsiwaEventType {
     switch (value) {
       case 'monthly_tsiwa':
         return TsiwaEventType.monthlyTsiwa;
+      case 'yearly_zikir':
       case 'zikir':
-        return TsiwaEventType.zikir;
       case 'feeding_day':
-        return TsiwaEventType.feedingDay;
+        return TsiwaEventType.yearlyZikir;
       default:
         return TsiwaEventType.other;
     }

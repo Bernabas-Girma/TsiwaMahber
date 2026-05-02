@@ -15,10 +15,7 @@ import 'package:tsiwa_mahber/core/constants/app_constants.dart';
 class TsiwaMemberTab extends StatefulWidget {
   final AppUser currentUser;
 
-  const TsiwaMemberTab({
-    super.key,
-    required this.currentUser,
-  });
+  const TsiwaMemberTab({super.key, required this.currentUser});
 
   @override
   State<TsiwaMemberTab> createState() => _TsiwaMemberTabState();
@@ -75,8 +72,11 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
                         color: AppTheme.primary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.church,
-                          color: AppTheme.primary, size: 24),
+                      child: const Icon(
+                        Icons.church,
+                        color: AppTheme.primary,
+                        size: 24,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -106,14 +106,15 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
                     // Role badge
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.primary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        _roleDisplay(
-                            widget.currentUser.tsiwaRoleFor(tsiwaId)),
+                        _roleDisplay(widget.currentUser.tsiwaRoleFor(tsiwaId)),
                         style: const TextStyle(
                           fontSize: 11,
                           color: AppTheme.primary,
@@ -147,8 +148,9 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
         }
 
         final members = snapshot.data ?? [];
-        final rotationMembers =
-            members.where((m) => m.role != UserRole.developer).toList();
+        final rotationMembers = members
+            .where((m) => m.role != UserRole.developer)
+            .toList();
 
         if (rotationMembers.isEmpty) {
           return Card(
@@ -174,8 +176,11 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.calendar_month,
-                        color: AppTheme.primary, size: 20),
+                    const Icon(
+                      Icons.calendar_month,
+                      color: AppTheme.primary,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       S.teregnaCalendar,
@@ -190,7 +195,9 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
                 Text(
                   '${S.monthlyTsiwaDay}: ${S.tsiwaDay(tsiwaDay)}',
                   style: const TextStyle(
-                      fontSize: 12, color: AppTheme.textMuted),
+                    fontSize: 12,
+                    color: AppTheme.textMuted,
+                  ),
                 ),
                 const Divider(height: 24),
 
@@ -202,6 +209,38 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
                   rotationMembers,
                   isCurrent: true,
                 ),
+
+                const SizedBox(height: 8),
+
+                // Yearly Zikir dates
+                if (tsiwa.yearlyZikir.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  ...tsiwa.yearlyZikir.map((entry) {
+                    final monthName = AppConstants.ethiopianMonthName(
+                      entry.month,
+                    );
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.auto_awesome,
+                            size: 14,
+                            color: AppTheme.secondary,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${S.yearlyZikirTitle}: $monthName ${entry.day}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
 
                 const SizedBox(height: 8),
 
@@ -222,14 +261,8 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
                     month -= 13;
                     year++;
                   }
-                  final idx =
-                      (currentIdx + i + 1) % rotationMembers.length;
-                  return _buildMonthEntry(
-                    month,
-                    year,
-                    idx,
-                    rotationMembers,
-                  );
+                  final idx = (currentIdx + i + 1) % rotationMembers.length;
+                  return _buildMonthEntry(month, year, idx, rotationMembers);
                 }),
               ],
             ),
@@ -286,7 +319,10 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
               child: Text(
                 S.teregna,
                 style: const TextStyle(
-                    fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
+                  fontSize: 10,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           Expanded(
@@ -312,16 +348,15 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
             const SizedBox(width: 8),
             Text(
               S.announcements,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ],
         ),
         const SizedBox(height: 8),
         StreamBuilder<List<Announcement>>(
-          stream: _announcementRepository.watchAnnouncements(AppConstants.defaultAreaId),
+          stream: _announcementRepository.watchAnnouncements(
+            AppConstants.defaultAreaId,
+          ),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return LoadingState(message: S.loading);

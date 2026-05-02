@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:tsiwa_mahber/core/constants/app_constants.dart';
 import 'package:tsiwa_mahber/core/theme/app_theme.dart';
 import 'package:tsiwa_mahber/features/tsiwa/data/tsiwa_repository.dart';
 import 'package:tsiwa_mahber/features/tsiwa/domain/tsiwa_mahber.dart';
@@ -9,11 +10,7 @@ class TsiwaFormScreen extends StatefulWidget {
   final String areaId;
   final TsiwaMahber? existingTsiwa;
 
-  const TsiwaFormScreen({
-    super.key,
-    required this.areaId,
-    this.existingTsiwa,
-  });
+  const TsiwaFormScreen({super.key, required this.areaId, this.existingTsiwa});
 
   @override
   State<TsiwaFormScreen> createState() => _TsiwaFormScreenState();
@@ -32,19 +29,11 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
   late final TextEditingController _monthlyTsiwaDayController;
   late final TextEditingController _monthlyTsiwaDayNoteController;
 
-  late final TextEditingController _zikirTitleController;
-  late final TextEditingController _zikirMonthController;
-  late final TextEditingController _zikirDayController;
-  late final TextEditingController _zikirNoteController;
-
-  late final TextEditingController _feedingTitleController;
-  late final TextEditingController _feedingMonthController;
-  late final TextEditingController _feedingDayController;
-  late final TextEditingController _feedingNoteController;
-
   late bool _isActive;
   late bool _isArchived;
   bool _isSaving = false;
+
+  late List<YearlyZikirEntry> _yearlyZikir;
 
   bool get _isEditing => widget.existingTsiwa != null;
 
@@ -66,27 +55,7 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
       text: t?.monthlyTsiwaDayNote ?? '',
     );
 
-    _zikirTitleController = TextEditingController(
-      text: t?.zikirTitle ?? S.zikirDay,
-    );
-    _zikirMonthController = TextEditingController(
-      text: t?.zikirMonth?.toString() ?? '',
-    );
-    _zikirDayController = TextEditingController(
-      text: t?.zikirDay?.toString() ?? '',
-    );
-    _zikirNoteController = TextEditingController(text: t?.zikirNote ?? '');
-
-    _feedingTitleController = TextEditingController(
-      text: t?.feedingTitle ?? S.feedingDay,
-    );
-    _feedingMonthController = TextEditingController(
-      text: t?.feedingMonth?.toString() ?? '',
-    );
-    _feedingDayController = TextEditingController(
-      text: t?.feedingDay?.toString() ?? '',
-    );
-    _feedingNoteController = TextEditingController(text: t?.feedingNote ?? '');
+    _yearlyZikir = List.from(t?.yearlyZikir ?? []);
 
     _isActive = t?.isActive ?? true;
     _isArchived = t?.isArchived ?? false;
@@ -101,14 +70,6 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
     _descriptionController.dispose();
     _monthlyTsiwaDayController.dispose();
     _monthlyTsiwaDayNoteController.dispose();
-    _zikirTitleController.dispose();
-    _zikirMonthController.dispose();
-    _zikirDayController.dispose();
-    _zikirNoteController.dispose();
-    _feedingTitleController.dispose();
-    _feedingMonthController.dispose();
-    _feedingDayController.dispose();
-    _feedingNoteController.dispose();
     super.dispose();
   }
 
@@ -131,10 +92,7 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
               ),
             )
           else
-            IconButton(
-              icon: const Icon(Icons.check),
-              onPressed: _save,
-            ),
+            IconButton(icon: const Icon(Icons.check), onPressed: _save),
         ],
       ),
       body: Form(
@@ -165,10 +123,7 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
               label: S.saintName,
             ),
             const SizedBox(height: 12),
-            _buildTextField(
-              controller: _locationController,
-              label: S.location,
-            ),
+            _buildTextField(controller: _locationController, label: S.location),
             const SizedBox(height: 12),
             _buildTextField(
               controller: _descriptionController,
@@ -198,71 +153,7 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
               label: S.note,
             ),
             const SizedBox(height: 24),
-            _buildSectionHeader(S.zikirDay),
-            const SizedBox(height: 8),
-            _buildTextField(
-              controller: _zikirTitleController,
-              label: S.title,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildNumberField(
-                    controller: _zikirMonthController,
-                    label: S.monthRange,
-                    validator: _validateOptionalMonth,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildNumberField(
-                    controller: _zikirDayController,
-                    label: S.dayRange2,
-                    validator: (value) =>
-                        _validateOptionalDay(value, _zikirMonthController.text),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildTextField(
-              controller: _zikirNoteController,
-              label: S.note,
-            ),
-            const SizedBox(height: 24),
-            _buildSectionHeader(S.feedingDay),
-            const SizedBox(height: 8),
-            _buildTextField(
-              controller: _feedingTitleController,
-              label: S.title,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildNumberField(
-                    controller: _feedingMonthController,
-                    label: S.monthRange,
-                    validator: _validateOptionalMonth,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildNumberField(
-                    controller: _feedingDayController,
-                    label: S.dayRange2,
-                    validator: (value) => _validateOptionalDay(
-                        value, _feedingMonthController.text),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildTextField(
-              controller: _feedingNoteController,
-              label: S.note,
-            ),
+            _buildYearlyZikirSection(),
             const SizedBox(height: 24),
             _buildSectionHeader(S.status),
             const SizedBox(height: 8),
@@ -281,8 +172,7 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
                       title: Text(S.archive),
                       subtitle: Text(S.archiveTsiwa),
                       value: _isArchived,
-                      onChanged: (value) =>
-                          setState(() => _isArchived = value),
+                      onChanged: (value) => setState(() => _isArchived = value),
                     ),
                   ],
                 ],
@@ -315,6 +205,193 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildYearlyZikirSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: _buildSectionHeader(S.yearlyZikirTitle)),
+            IconButton(
+              icon: const Icon(Icons.add_circle, color: AppTheme.primary),
+              onPressed: _addZikirEntry,
+              tooltip: S.addYearlyZikir,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (_yearlyZikir.isEmpty)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                S.noYearlyZikirYet,
+                style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
+              ),
+            ),
+          )
+        else
+          ..._yearlyZikir.asMap().entries.map((entry) {
+            final index = entry.key;
+            final zikir = entry.value;
+            final monthName = AppConstants.ethiopianMonthName(zikir.month);
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: AppTheme.secondary.withValues(alpha: 0.15),
+                  child: const Icon(
+                    Icons.auto_awesome,
+                    color: AppTheme.secondary,
+                    size: 18,
+                  ),
+                ),
+                title: Text('$monthName ${zikir.day}'),
+                subtitle: zikir.note.isNotEmpty
+                    ? Text(
+                        zikir.note,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textMuted,
+                        ),
+                      )
+                    : null,
+                trailing: IconButton(
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.red,
+                    size: 20,
+                  ),
+                  onPressed: () => _removeZikirEntry(index),
+                ),
+              ),
+            );
+          }),
+      ],
+    );
+  }
+
+  void _addZikirEntry() {
+    int selectedMonth = 1;
+    int selectedDay = 1;
+    final noteController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(S.addYearlyZikir),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      S.month,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<int>(
+                      initialValue: selectedMonth,
+                      items: List.generate(AppConstants.tsiwaMonthCount, (i) {
+                        return DropdownMenuItem(
+                          value: i + 1,
+                          child: Text(AppConstants.ethiopianMonths[i]),
+                        );
+                      }),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setDialogState(() => selectedMonth = val);
+                        }
+                      },
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      S.day,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<int>(
+                      initialValue: selectedDay,
+                      items: List.generate(30, (i) {
+                        return DropdownMenuItem(
+                          value: i + 1,
+                          child: Text('${i + 1}'),
+                        );
+                      }),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setDialogState(() => selectedDay = val);
+                        }
+                      },
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: noteController,
+                      decoration: InputDecoration(
+                        labelText: S.note,
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(S.cancel),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _yearlyZikir.add(
+                        YearlyZikirEntry(
+                          month: selectedMonth,
+                          day: selectedDay,
+                          note: noteController.text.trim(),
+                        ),
+                      );
+                    });
+                    Navigator.pop(ctx);
+                  },
+                  child: Text(S.add),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ).then((_) => noteController.dispose());
+  }
+
+  void _removeZikirEntry(int index) {
+    setState(() {
+      _yearlyZikir.removeAt(index);
+    });
   }
 
   Widget _buildSectionHeader(String title) {
@@ -356,34 +433,6 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
     );
   }
 
-  String? _validateOptionalMonth(String? value) {
-    if (value == null || value.trim().isEmpty) return null;
-    final month = int.tryParse(value);
-    if (month == null || month < 1 || month > 13) {
-      return S.monthMustBe1to13;
-    }
-    return null;
-  }
-
-  String? _validateOptionalDay(String? value, String monthText) {
-    final hasMonth = monthText.trim().isNotEmpty;
-    final hasDay = value != null && value.trim().isNotEmpty;
-
-    if (hasMonth && !hasDay) {
-      return S.enterDayVal;
-    }
-    if (hasDay && !hasMonth) {
-      return S.enterMonthVal;
-    }
-    if (hasDay) {
-      final day = int.tryParse(value);
-      if (day == null || day < 1 || day > 30) {
-        return S.dayMustBe1to30;
-      }
-    }
-    return null;
-  }
-
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -400,18 +449,10 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
         description: _descriptionController.text.trim(),
         monthlyTsiwaDay: int.parse(_monthlyTsiwaDayController.text.trim()),
         monthlyTsiwaDayNote: _monthlyTsiwaDayNoteController.text.trim(),
-        zikirTitle: _zikirTitleController.text.trim(),
-        zikirMonth: _parseOptionalInt(_zikirMonthController.text),
-        zikirDay: _parseOptionalInt(_zikirDayController.text),
-        zikirNote: _zikirNoteController.text.trim(),
-        feedingTitle: _feedingTitleController.text.trim(),
-        feedingMonth: _parseOptionalInt(_feedingMonthController.text),
-        feedingDay: _parseOptionalInt(_feedingDayController.text),
-        feedingNote: _feedingNoteController.text.trim(),
+        yearlyZikir: _yearlyZikir,
         isActive: _isActive,
         isArchived: _isArchived,
-        currentRotationIndex:
-            widget.existingTsiwa?.currentRotationIndex ?? 0,
+        currentRotationIndex: widget.existingTsiwa?.currentRotationIndex ?? 0,
         memberCount: widget.existingTsiwa?.memberCount ?? 0,
         museCount: widget.existingTsiwa?.museCount ?? 0,
       );
@@ -427,20 +468,14 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.dataSaveFailed)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(S.dataSaveFailed)));
       }
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
       }
     }
-  }
-
-  int? _parseOptionalInt(String text) {
-    final trimmed = text.trim();
-    if (trimmed.isEmpty) return null;
-    return int.tryParse(trimmed);
   }
 }
