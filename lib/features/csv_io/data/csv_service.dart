@@ -496,7 +496,7 @@ class CsvService {
         final v = cell.value;
         if (v is IntCellValue) return v.value.toString();
         if (v is DoubleCellValue) return v.value.toInt().toString();
-        if (v is TextCellValue) return v.value;
+        if (v is TextCellValue) return v.value.toString();
         return v.toString();
       }).toList();
 
