@@ -14,12 +14,10 @@ import 'package:tsiwa_mahber/core/constants/app_constants.dart';
 
 class TsiwaMemberTab extends StatefulWidget {
   final AppUser currentUser;
-  final String areaId;
 
   const TsiwaMemberTab({
     super.key,
     required this.currentUser,
-    required this.areaId,
   });
 
   @override
@@ -50,7 +48,7 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
 
   Widget _buildTsiwaSection(String tsiwaId) {
     return StreamBuilder<TsiwaMahber?>(
-      stream: _tsiwaRepository.watchTsiwa(widget.areaId, tsiwaId),
+      stream: _tsiwaRepository.watchTsiwa(AppConstants.defaultAreaId, tsiwaId),
       builder: (context, tsiwaSnap) {
         if (tsiwaSnap.connectionState == ConnectionState.waiting) {
           return const Padding(
@@ -323,7 +321,7 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
         ),
         const SizedBox(height: 8),
         StreamBuilder<List<Announcement>>(
-          stream: _announcementRepository.watchAnnouncements(widget.areaId),
+          stream: _announcementRepository.watchAnnouncements(AppConstants.defaultAreaId),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return LoadingState(message: S.loading);
@@ -377,7 +375,7 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
             context,
             MaterialPageRoute(
               builder: (context) => AnnouncementDetailScreen(
-                areaId: widget.areaId,
+                areaId: AppConstants.defaultAreaId,
                 announcementId: announcement.id,
                 currentUser: widget.currentUser,
               ),

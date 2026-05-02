@@ -10,9 +10,7 @@ import 'package:tsiwa_mahber/features/global_members/presentation/global_member_
 import 'package:tsiwa_mahber/features/global_members/presentation/global_member_csv_import_screen.dart';
 
 class GlobalMemberListScreen extends StatefulWidget {
-  final String areaId;
-
-  const GlobalMemberListScreen({super.key, required this.areaId});
+  const GlobalMemberListScreen({super.key});
 
   @override
   State<GlobalMemberListScreen> createState() =>
@@ -36,9 +34,7 @@ class _GlobalMemberListScreenState extends State<GlobalMemberListScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => GlobalMemberCsvImportScreen(
-                    areaId: widget.areaId,
-                  ),
+                  builder: (context) => const GlobalMemberCsvImportScreen(),
                 ),
               );
             },
@@ -70,8 +66,15 @@ class _GlobalMemberListScreenState extends State<GlobalMemberListScreen> {
 
   Widget _buildList() {
     return StreamBuilder<List<AppUser>>(
-      stream: _authRepository.watchUsersByArea(widget.areaId),
+      stream: _authRepository.watchAllUsers(),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(S.dataLoadFailed,
+                style: TextStyle(color: Colors.red.shade300)),
+          );
+        }
+
         if (snapshot.connectionState == ConnectionState.waiting) {
           return LoadingState(message: S.loading);
         }
@@ -198,7 +201,6 @@ class _GlobalMemberListScreenState extends State<GlobalMemberListScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => GlobalMemberFormScreen(
-          areaId: widget.areaId,
           existingMember: member,
         ),
       ),

@@ -110,8 +110,6 @@ class _AreaSelectionScreenState extends State<AreaSelectionScreen> {
       MaterialPageRoute(
         builder: (context) => AreaHomeScreen(
           currentUser: widget.currentUser,
-          areaId: area.id,
-          areaName: area.name,
           themeProvider: widget.themeProvider,
           localeProvider: widget.localeProvider,
         ),

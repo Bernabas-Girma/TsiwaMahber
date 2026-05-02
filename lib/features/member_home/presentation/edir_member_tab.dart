@@ -7,15 +7,14 @@ import 'package:tsiwa_mahber/features/edir/data/edir_repository.dart';
 import 'package:tsiwa_mahber/features/edir/domain/edir.dart';
 import 'package:tsiwa_mahber/features/edir/domain/edir_member.dart';
 import 'package:tsiwa_mahber/features/edir/presentation/record_payment_screen.dart';
+import 'package:tsiwa_mahber/core/constants/app_constants.dart';
 
 class EdirMemberTab extends StatefulWidget {
   final AppUser currentUser;
-  final String areaId;
 
   const EdirMemberTab({
     super.key,
     required this.currentUser,
-    required this.areaId,
   });
 
   @override
@@ -47,7 +46,7 @@ class _EdirMemberTabState extends State<EdirMemberTab> {
 
   Widget _buildEdirSection(String edirId, bool canManagePayments) {
     return StreamBuilder<Edir?>(
-      stream: _edirRepository.watchEdir(widget.areaId, edirId),
+      stream: _edirRepository.watchEdir(AppConstants.defaultAreaId, edirId),
       builder: (context, edirSnap) {
         if (edirSnap.connectionState == ConnectionState.waiting) {
           return const Padding(
@@ -152,7 +151,7 @@ class _EdirMemberTabState extends State<EdirMemberTab> {
 
   Widget _buildMemberPaymentList(Edir edir, bool canManagePayments) {
     return StreamBuilder<List<EdirMember>>(
-      stream: _edirRepository.watchEdirMembers(widget.areaId, edir.id),
+      stream: _edirRepository.watchEdirMembers(AppConstants.defaultAreaId, edir.id),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return LoadingState(message: S.loading);
@@ -231,7 +230,7 @@ class _EdirMemberTabState extends State<EdirMemberTab> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => RecordPaymentScreen(
-                        areaId: widget.areaId,
+                        areaId: AppConstants.defaultAreaId,
                         edirId: edir.id,
                         member: member,
                         monthlyContribution: edir.monthlyContribution,

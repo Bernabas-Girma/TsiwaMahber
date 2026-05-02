@@ -7,11 +7,10 @@ import 'package:tsiwa_mahber/core/theme/app_theme.dart';
 import 'package:tsiwa_mahber/core/widgets/loading_state.dart';
 import 'package:tsiwa_mahber/features/auth/data/auth_repository.dart';
 import 'package:tsiwa_mahber/features/auth/domain/app_user.dart';
+import 'package:tsiwa_mahber/core/constants/app_constants.dart';
 
 class GlobalMemberCsvImportScreen extends StatefulWidget {
-  final String areaId;
-
-  const GlobalMemberCsvImportScreen({super.key, required this.areaId});
+  const GlobalMemberCsvImportScreen({super.key});
 
   @override
   State<GlobalMemberCsvImportScreen> createState() =>
@@ -93,7 +92,7 @@ class _GlobalMemberCsvImportScreenState
         displayName: name,
         phone: phone,
         passwordCode: code,
-        areaId: widget.areaId,
+        areaId: AppConstants.defaultAreaId,
         role: UserRole.member,
       ));
     }

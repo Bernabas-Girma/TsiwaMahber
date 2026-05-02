@@ -8,7 +8,9 @@ import 'package:tsiwa_mahber/core/widgets/loading_state.dart';
 import 'package:tsiwa_mahber/features/auth/data/auth_repository.dart';
 import 'package:tsiwa_mahber/features/auth/domain/app_user.dart';
 import 'package:tsiwa_mahber/features/auth/presentation/login_screen.dart';
-import 'package:tsiwa_mahber/features/area/presentation/area_selection_screen.dart';
+import 'package:tsiwa_mahber/features/area/data/area_repository.dart';
+import 'package:tsiwa_mahber/features/area/presentation/area_home_screen.dart';
+import 'package:tsiwa_mahber/features/developer/data/developer_service.dart';
 import 'package:tsiwa_mahber/features/member_home/presentation/member_home_screen.dart';
 
 class AuthGate extends StatefulWidget {
@@ -27,6 +29,9 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   final _authRepository = AuthRepository();
+  final _areaRepository = AreaRepository();
+  final _developerService = DeveloperService();
+  bool _defaultsInitialized = false;
 
   AppUser? _memberUser;
   StreamSubscription<AppUser?>? _memberWatchSub;
@@ -42,6 +47,19 @@ class _AuthGateState extends State<AuthGate> {
   void initState() {
     super.initState();
     _authStream = _authRepository.authStateChanges;
+    _initDefaults();
+  }
+
+  Future<void> _initDefaults() async {
+    if (_defaultsInitialized) return;
+    _defaultsInitialized = true;
+    try {
+      await _areaRepository.ensureDefaultArea();
+      await _developerService.ensureDefaultDevelopers();
+    } catch (_) {
+      // Ignore permission errors; defaults will be created once a
+      // developer signs in.
+    }
   }
 
   Future<void> _loadDevUser(String uid) async {
@@ -138,7 +156,7 @@ class _AuthGateState extends State<AuthGate> {
             return _buildBlockedScreen();
           }
 
-          return AreaSelectionScreen(
+          return AreaHomeScreen(
             currentUser: _devUser,
             themeProvider: widget.themeProvider,
             localeProvider: widget.localeProvider,

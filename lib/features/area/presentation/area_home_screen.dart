@@ -29,11 +29,10 @@ import 'package:tsiwa_mahber/features/tsiwa/presentation/tsiwa_list_screen.dart'
 import 'package:tsiwa_mahber/features/developer/presentation/developer_management_screen.dart';
 import 'package:tsiwa_mahber/features/global_members/presentation/global_member_list_screen.dart';
 import 'package:tsiwa_mahber/core/l10n/app_strings.dart';
+import 'package:tsiwa_mahber/core/constants/app_constants.dart';
 
 class AreaHomeScreen extends StatefulWidget {
   final AppUser? currentUser;
-  final String areaId;
-  final String areaName;
   final ThemeProvider themeProvider;
   final LocaleProvider localeProvider;
   final Future<void> Function()? onLogout;
@@ -41,12 +40,13 @@ class AreaHomeScreen extends StatefulWidget {
   const AreaHomeScreen({
     super.key,
     this.currentUser,
-    required this.areaId,
-    required this.areaName,
     required this.themeProvider,
     required this.localeProvider,
     this.onLogout,
   });
+
+  String get areaId => AppConstants.defaultAreaId;
+  String get areaName => AppConstants.defaultAreaName;
 
   @override
   State<AreaHomeScreen> createState() => _AreaHomeScreenState();
@@ -291,9 +291,7 @@ class _AreaHomeScreenState extends State<AreaHomeScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => GlobalMemberListScreen(
-                  areaId: widget.areaId,
-                ),
+                builder: (context) => const GlobalMemberListScreen(),
               ),
             );
           },
