@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:csv/csv.dart';
+import 'package:excel/excel.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:tsiwa_mahber/core/constants/firestore_paths.dart';
@@ -145,9 +148,7 @@ class CsvService {
 
   // ── Import ──
 
-  Future<List<Member>> parseMembersCsv(String csvContent) async {
-    final rows = const CsvToListConverter(shouldParseNumbers: false)
-        .convert(_sanitizeCsv(csvContent));
+  List<Member> parseMembersFromRows(List<List<dynamic>> rows) {
     if (rows.length < 2) return [];
 
     final members = <Member>[];
@@ -161,8 +162,8 @@ class CsvService {
       members.add(Member(
         fullName: row[0].toString().trim(),
         christianName: row[1].toString().trim(),
-        phone: row[2].toString().trim(),
-        phone2: row.length > 3 ? row[3].toString().trim() : '',
+        phone: _normalizePhone(row[2].toString().trim()),
+        phone2: row.length > 3 ? _normalizePhone(row[3].toString().trim()) : '',
         idNumber: row.length > 4 ? row[4].toString().trim() : '',
         address: row.length > 5 ? row[5].toString().trim() : '',
         role: _parseMemberRole(roleName),
@@ -173,9 +174,15 @@ class CsvService {
     return members;
   }
 
-  Future<List<Leader>> parseLeadersCsv(String csvContent) async {
-    final rows = const CsvToListConverter(shouldParseNumbers: false)
-        .convert(_sanitizeCsv(csvContent));
+  Future<List<Member>> parseMembersCsv(String csvContent) async {
+    final rows = const CsvToListConverter(
+      shouldParseNumbers: false,
+      eol: '\n',
+    ).convert(_sanitizeCsv(csvContent));
+    return parseMembersFromRows(rows);
+  }
+
+  List<Leader> parseLeadersFromRows(List<List<dynamic>> rows) {
     if (rows.length < 2) return [];
 
     final leaders = <Leader>[];
@@ -184,14 +191,13 @@ class CsvService {
       if (row.length < 3) continue;
 
       final roleName = row.length > 4 ? row[4].toString().trim() : '';
-
       final edirRoleName = row.length > 5 ? row[5].toString().trim() : '';
 
       leaders.add(Leader(
         fullName: row[0].toString().trim(),
         christianName: row[1].toString().trim(),
-        phone: row[2].toString().trim(),
-        phone2: row.length > 3 ? row[3].toString().trim() : '',
+        phone: _normalizePhone(row[2].toString().trim()),
+        phone2: row.length > 3 ? _normalizePhone(row[3].toString().trim()) : '',
         role: _parseLeaderRole(roleName),
         edirRole: _parseEdirLeaderRole(edirRoleName),
       ));
@@ -200,9 +206,15 @@ class CsvService {
     return leaders;
   }
 
-  Future<List<EdirMember>> parseEdirMembersCsv(String csvContent) async {
-    final rows = const CsvToListConverter(shouldParseNumbers: false)
-        .convert(_sanitizeCsv(csvContent));
+  Future<List<Leader>> parseLeadersCsv(String csvContent) async {
+    final rows = const CsvToListConverter(
+      shouldParseNumbers: false,
+      eol: '\n',
+    ).convert(_sanitizeCsv(csvContent));
+    return parseLeadersFromRows(rows);
+  }
+
+  List<EdirMember> parseEdirMembersFromRows(List<List<dynamic>> rows) {
     if (rows.length < 2) return [];
 
     final members = <EdirMember>[];
@@ -215,12 +227,20 @@ class CsvService {
       members.add(EdirMember(
         fullName: row[0].toString().trim(),
         christianName: row[1].toString().trim(),
-        phone: row[2].toString().trim(),
+        phone: _normalizePhone(row[2].toString().trim()),
         status: _parseEdirMemberStatus(statusName),
       ));
     }
 
     return members;
+  }
+
+  Future<List<EdirMember>> parseEdirMembersCsv(String csvContent) async {
+    final rows = const CsvToListConverter(
+      shouldParseNumbers: false,
+      eol: '\n',
+    ).convert(_sanitizeCsv(csvContent));
+    return parseEdirMembersFromRows(rows);
   }
 
   // ── Batch write ──
@@ -409,21 +429,114 @@ class CsvService {
     await Share.shareXFiles([XFile(file.path)]);
   }
 
-  Future<String?> pickCsvFile() async {
+  /// Picks a CSV or XLSX file and returns parsed rows as a list of string lists.
+  /// Returns null if user cancels.
+  Future<List<List<String>>?> pickAndParseFile() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['csv'],
+      allowedExtensions: ['csv', 'xlsx'],
+      withData: true,
     );
 
     if (result == null || result.files.isEmpty) return null;
 
-    final path = result.files.single.path;
+    final file = result.files.single;
+    final extension = file.extension?.toLowerCase() ?? '';
+
+    if (extension == 'xlsx') {
+      return _parseXlsxFile(file);
+    } else {
+      return _parseCsvFile(file);
+    }
+  }
+
+  Future<List<List<String>>> _parseCsvFile(PlatformFile file) async {
+    String content;
+
+    final bytes = file.bytes;
+    if (bytes != null && bytes.isNotEmpty) {
+      content = utf8.decode(bytes, allowMalformed: true);
+    } else if (!kIsWeb && file.path != null) {
+      content = await File(file.path!).readAsString();
+    } else {
+      throw Exception('Failed to read file');
+    }
+
+    final sanitized = _sanitizeCsv(content);
+    final rows = const CsvToListConverter(
+      shouldParseNumbers: false,
+      eol: '\n',
+    ).convert(sanitized);
+
+    return rows.map((row) => row.map((e) => e.toString()).toList()).toList();
+  }
+
+  Future<List<List<String>>> _parseXlsxFile(PlatformFile file) async {
+    Uint8List bytes;
+
+    if (file.bytes != null && file.bytes!.isNotEmpty) {
+      bytes = file.bytes!;
+    } else if (!kIsWeb && file.path != null) {
+      bytes = await File(file.path!).readAsBytes();
+    } else {
+      throw Exception('Failed to read file');
+    }
+
+    final excel = Excel.decodeBytes(bytes);
+    final rows = <List<String>>[];
+
+    final sheetName = excel.tables.keys.first;
+    final sheet = excel.tables[sheetName];
+    if (sheet == null) return rows;
+
+    for (final row in sheet.rows) {
+      final values = row.map((cell) {
+        if (cell == null || cell.value == null) return '';
+        final v = cell.value;
+        if (v is IntCellValue) return v.value.toString();
+        if (v is DoubleCellValue) return v.value.toInt().toString();
+        if (v is TextCellValue) return v.value;
+        return v.toString();
+      }).toList();
+
+      if (values.every((v) => v.trim().isEmpty)) continue;
+      rows.add(values);
+    }
+
+    return rows;
+  }
+
+  @Deprecated('Use pickAndParseFile() instead')
+  Future<String?> pickCsvFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['csv'],
+      withData: true,
+    );
+
+    if (result == null || result.files.isEmpty) return null;
+
+    final file = result.files.single;
+    final bytes = file.bytes;
+    if (bytes != null && bytes.isNotEmpty) {
+      return utf8.decode(bytes, allowMalformed: true);
+    }
+
+    final path = file.path;
     if (path == null) return null;
 
     return File(path).readAsString();
   }
 
   // ── Helpers ──
+
+  static String _normalizePhone(String phone) {
+    if (phone.isEmpty) return phone;
+    if (!phone.startsWith('0') && !phone.startsWith('+')) {
+      return '0$phone';
+    }
+    return phone;
+  }
 
   MemberRole _parseMemberRole(String displayName) {
     for (final role in MemberRole.values) {
