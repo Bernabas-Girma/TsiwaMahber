@@ -270,12 +270,12 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
         .where((u) => !currentIds.contains(u.uid))
         .toList();
 
+    if (!mounted) return;
+
     if (available.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.noUnassignedMembers)),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.noUnassignedMembers)),
+      );
       return;
     }
 
@@ -895,7 +895,7 @@ class _SectionCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (trailing != null) trailing!,
+                ?trailing,
               ],
             ),
             const SizedBox(height: 12),

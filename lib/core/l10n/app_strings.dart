@@ -685,6 +685,5 @@ class S {
       _am ? '$n ተመርጠዋል' : '$n selected';
 
   // ── Year switcher ──
-  static String get year => _am ? 'ዓመት' : 'Year';
   static String yearLabel(int y) => _am ? '$y ዓ.ም.' : 'Year $y';
 }
