@@ -4,7 +4,6 @@ import 'package:tsiwa_mahber/features/edir/domain/edir.dart';
 import 'package:tsiwa_mahber/features/edir/domain/edir_member.dart';
 import 'package:tsiwa_mahber/features/edir/domain/payment.dart';
 import 'package:tsiwa_mahber/features/leadership/domain/leader.dart';
-import 'package:tsiwa_mahber/features/members/domain/member.dart';
 import 'package:tsiwa_mahber/features/tsiwa/domain/tsiwa_mahber.dart';
 
 class OverviewStats {
@@ -80,15 +79,29 @@ class ReportService {
         .collection(FirestorePaths.edirs(areaId))
         .get();
 
+    // Count actual members from users collection (not stale memberCount)
+    final usersSnap = await _firestore
+        .collection('users')
+        .where('areaId', isEqualTo: areaId)
+        .get();
+
+    // Count unique members who are assigned to at least one tsiwa
+    int totalMembers = 0;
+    for (final doc in usersSnap.docs) {
+      final data = doc.data();
+      final tsiwaIds = data['assignedTsiwaIds'] as List<dynamic>?;
+      if (tsiwaIds != null && tsiwaIds.isNotEmpty) {
+        totalMembers++;
+      }
+    }
+
     final tsiwas = tsiwaSnap.docs
         .map((d) => TsiwaMahber.fromDoc(d, areaId))
         .toList();
 
-    int totalMembers = 0;
     int activeTsiwas = 0;
     int archivedTsiwas = 0;
     for (final t in tsiwas) {
-      totalMembers += t.memberCount;
       if (t.isArchived) {
         archivedTsiwas++;
       } else if (t.isActive) {
@@ -118,39 +131,71 @@ class ReportService {
         .collection(FirestorePaths.tsiwaMahbers(areaId))
         .get();
 
+    // Fetch all users in this area once
+    final usersSnap = await _firestore
+        .collection('users')
+        .where('areaId', isEqualTo: areaId)
+        .get();
+
+    final allUsers = usersSnap.docs.map((d) {
+      final data = d.data();
+      return (
+        uid: d.id,
+        displayName: data['displayName'] as String? ?? '',
+        assignedTsiwaIds: List<String>.from(
+            data['assignedTsiwaIds'] as List<dynamic>? ?? []),
+        tsiwaRoles: Map<String, String>.from(
+            data['tsiwaRoles'] as Map<dynamic, dynamic>? ?? {}),
+        isActive: data['isActive'] as bool? ?? true,
+        kickedOut: data['kickedOut'] as bool? ?? false,
+      );
+    }).toList();
+
     final stats = <TsiwaStats>[];
 
     for (final doc in tsiwaSnap.docs) {
       final tsiwa = TsiwaMahber.fromDoc(doc, areaId);
-      final memberSnap = await _firestore
-          .collection(FirestorePaths.members(areaId, doc.id))
-          .where('deletedAt', isNull: true)
-          .get();
+      final tsiwaId = doc.id;
 
-      final members = memberSnap.docs.map((d) => Member.fromDoc(d)).toList();
+      // Members assigned to this tsiwa from the users collection
+      final tsiwaMembers = allUsers
+          .where((u) => u.assignedTsiwaIds.contains(tsiwaId))
+          .toList();
 
       int active = 0;
-      int inRotation = 0;
       final roleCounts = <String, int>{};
 
-      for (final m in members) {
-        if (m.isActive) active++;
-        if (m.isInRotation) inRotation++;
-        final roleKey = m.role.displayName;
-        roleCounts[roleKey] = (roleCounts[roleKey] ?? 0) + 1;
+      for (final m in tsiwaMembers) {
+        if (m.isActive && !m.kickedOut) active++;
+        final role = m.tsiwaRoles[tsiwaId] ?? 'member';
+        final roleLabel = _tsiwaRoleLabel(role);
+        roleCounts[roleLabel] = (roleCounts[roleLabel] ?? 0) + 1;
       }
 
       stats.add(TsiwaStats(
         tsiwa: tsiwa,
-        totalMembers: members.length,
+        totalMembers: tsiwaMembers.length,
         activeMembers: active,
-        inRotation: inRotation,
+        inRotation: active,
         roleCounts: roleCounts,
       ));
     }
 
     stats.sort((a, b) => b.totalMembers.compareTo(a.totalMembers));
     return stats;
+  }
+
+  String _tsiwaRoleLabel(String role) {
+    switch (role) {
+      case 'muse':
+        return 'ሙሴ';
+      case 'assistant_muse':
+        return 'ረዳት ሙሴ';
+      case 'observer':
+        return 'ታዛቢ';
+      default:
+        return 'ማህበርተኛ';
+    }
   }
 
   Future<Map<String, int>> getLeaderRoleDistribution(String areaId) async {

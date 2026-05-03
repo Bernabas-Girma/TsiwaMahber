@@ -139,6 +139,17 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
     );
   }
 
+  /// Resolve the order map for a given year, handling legacy year-0 data.
+  Map<int, String> _orderForYear(TsiwaMahber tsiwa, int year) {
+    if (tsiwa.monthlyOrder.containsKey(year)) {
+      return tsiwa.monthlyOrder[year]!;
+    }
+    if (tsiwa.monthlyOrder.containsKey(0)) {
+      return tsiwa.monthlyOrder[0]!;
+    }
+    return {};
+  }
+
   Widget _buildRotationCalendar(TsiwaMahber tsiwa, String tsiwaId) {
     return StreamBuilder<List<AppUser>>(
       stream: _authRepository.watchMembersByTsiwa(tsiwaId),
@@ -162,7 +173,7 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
 
         final ethToday = EthiopianCalendar.today();
         final tsiwaDay = tsiwa.monthlyTsiwaDay;
-        final order = tsiwa.monthlyOrder;
+        final order = _orderForYear(tsiwa, ethToday.year);
 
         // Build member lookup map
         final memberMap = <String, AppUser>{};
@@ -170,7 +181,7 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
           memberMap[m.uid] = m;
         }
 
-        // Find this user's order month
+        // Find this user's order month in current year
         int? myMonth;
         for (final entry in order.entries) {
           if (entry.value == widget.currentUser.uid) {
@@ -194,10 +205,20 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
                       size: 20,
                     ),
                     const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        S.teregnaCalendar,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                     Text(
-                      S.teregnaCalendar,
+                      S.yearLabel(ethToday.year),
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 12,
+                        color: AppTheme.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

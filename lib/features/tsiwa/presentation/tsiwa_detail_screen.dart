@@ -29,6 +29,13 @@ class TsiwaDetailScreen extends StatefulWidget {
 class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
   final _tsiwaRepository = TsiwaRepository();
   final _authRepository = AuthRepository();
+  late int _selectedYear;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedYear = EthiopianCalendar.today().year;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -213,10 +220,15 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
           title: S.members,
           icon: Icons.people,
           iconColor: AppTheme.primary,
+          trailing: IconButton(
+            icon: const Icon(Icons.person_add, color: AppTheme.primary),
+            tooltip: S.addMembersFromGlobal,
+            onPressed: () => _showBulkAddMembersDialog(members),
+          ),
           children: [
             _InfoRow(
               label: S.total,
-              value: '${members.length} አባላት · $museCount ሙሴ',
+              value: '${members.length} ማህበርተኞች · $museCount ሙሴ',
             ),
             if (snapshot.connectionState == ConnectionState.waiting)
               const Padding(
@@ -243,6 +255,179 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
         );
       },
     );
+  }
+
+  Future<void> _showBulkAddMembersDialog(List<AppUser> currentMembers) async {
+    final currentIds = currentMembers.map((m) => m.uid).toSet();
+
+    // Fetch all users in this area
+    final allUsersSnap = await _authRepository
+        .watchUsersByArea(widget.areaId)
+        .first;
+
+    // Filter out users already assigned to this tsiwa
+    final available = allUsersSnap
+        .where((u) => !currentIds.contains(u.uid))
+        .toList();
+
+    if (available.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.noUnassignedMembers)),
+        );
+      }
+      return;
+    }
+
+    final selected = <String>{};
+    String searchQuery = '';
+
+    final result = await showDialog<Set<String>>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final filtered = searchQuery.isEmpty
+                ? available
+                : available.where((u) {
+                    final q = searchQuery.toLowerCase();
+                    return u.displayName.toLowerCase().contains(q) ||
+                        u.christianName.toLowerCase().contains(q) ||
+                        u.phone.contains(q);
+                  }).toList();
+
+            return AlertDialog(
+              title: Text(S.addMembersFromGlobal),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 400,
+                child: Column(
+                  children: [
+                    TextField(
+                      decoration: InputDecoration(
+                        hintText: S.searchMembers,
+                        prefixIcon: const Icon(Icons.search, size: 20),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12,
+                        ),
+                      ),
+                      onChanged: (v) =>
+                          setDialogState(() => searchQuery = v),
+                    ),
+                    const SizedBox(height: 8),
+                    if (selected.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          S.selected(selected.length),
+                          style: const TextStyle(
+                            color: AppTheme.primary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    Expanded(
+                      child: filtered.isEmpty
+                          ? Center(
+                              child: Text(
+                                S.noUnassignedMembers,
+                                style: const TextStyle(
+                                  color: AppTheme.textMuted,
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: filtered.length,
+                              itemBuilder: (ctx, i) {
+                                final user = filtered[i];
+                                final isSelected =
+                                    selected.contains(user.uid);
+                                return CheckboxListTile(
+                                  dense: true,
+                                  value: isSelected,
+                                  onChanged: (v) {
+                                    setDialogState(() {
+                                      if (v == true) {
+                                        selected.add(user.uid);
+                                      } else {
+                                        selected.remove(user.uid);
+                                      }
+                                    });
+                                  },
+                                  title: Text(
+                                    user.displayName,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  subtitle: user.christianName.isNotEmpty
+                                      ? Text(
+                                          user.christianName,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                          ),
+                                        )
+                                      : null,
+                                  secondary: CircleAvatar(
+                                    backgroundColor: AppTheme.primary
+                                        .withValues(alpha: 0.15),
+                                    radius: 16,
+                                    child: Text(
+                                      user.displayName.isNotEmpty
+                                          ? user.displayName[0]
+                                          : '?',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(S.cancel),
+                ),
+                ElevatedButton(
+                  onPressed: selected.isEmpty
+                      ? null
+                      : () => Navigator.pop(ctx, selected),
+                  child: Text(
+                    '${S.add} (${selected.length})',
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result == null || result.isEmpty || !mounted) return;
+
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.addingMembers)),
+      );
+      final count = await _authRepository.batchAddUsersToTsiwa(
+        userIds: result.toList(),
+        tsiwaId: widget.tsiwaId,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.membersAdded(count))),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.failedToAddMembers)),
+        );
+      }
+    }
   }
 
   Widget _buildMemberTile(AppUser member) {
@@ -408,22 +593,69 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
     );
   }
 
+  /// Resolve the order map for a given year, handling legacy year-0 data.
+  Map<int, String> _orderForYear(TsiwaMahber tsiwa, int year) {
+    if (tsiwa.monthlyOrder.containsKey(year)) {
+      return tsiwa.monthlyOrder[year]!;
+    }
+    // Legacy flat data stored under year 0
+    if (tsiwa.monthlyOrder.containsKey(0)) {
+      return tsiwa.monthlyOrder[0]!;
+    }
+    return {};
+  }
+
   Widget _buildMonthlyOrderSection(TsiwaMahber tsiwa) {
     return StreamBuilder<List<AppUser>>(
       stream: _authRepository.watchMembersByTsiwa(widget.tsiwaId),
       builder: (context, snap) {
         final members = snap.data ?? [];
+        final ethToday = EthiopianCalendar.today();
+        final order = _orderForYear(tsiwa, _selectedYear);
 
         return _SectionCard(
           title: S.monthlyOrderTable,
           icon: Icons.table_chart_outlined,
           iconColor: Colors.deepPurple,
+          trailing: _buildYearSwitcher(ethToday.year),
           children: [
             for (int m = 1; m <= AppConstants.tsiwaMonthCount; m++)
-              _buildMonthOrderRow(tsiwa, m, members),
+              _buildMonthOrderRow(tsiwa, m, members, order, ethToday),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildYearSwitcher(int currentEthYear) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        InkWell(
+          onTap: () => setState(() => _selectedYear--),
+          borderRadius: BorderRadius.circular(12),
+          child: const Padding(
+            padding: EdgeInsets.all(4),
+            child: Icon(Icons.chevron_left, size: 20, color: AppTheme.primary),
+          ),
+        ),
+        Text(
+          S.yearLabel(_selectedYear),
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.primary,
+          ),
+        ),
+        InkWell(
+          onTap: () => setState(() => _selectedYear++),
+          borderRadius: BorderRadius.circular(12),
+          child: const Padding(
+            padding: EdgeInsets.all(4),
+            child: Icon(Icons.chevron_right, size: 20, color: AppTheme.primary),
+          ),
+        ),
+      ],
     );
   }
 
@@ -431,14 +663,15 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
     TsiwaMahber tsiwa,
     int month,
     List<AppUser> members,
+    Map<int, String> yearOrder,
+    EthiopianDate ethToday,
   ) {
-    final memberId = tsiwa.monthlyOrder[month];
+    final memberId = yearOrder[month];
     final assigned = memberId != null
         ? members.where((m) => m.uid == memberId).firstOrNull
         : null;
     final monthName = AppConstants.ethiopianMonthName(month);
-    final ethToday = EthiopianCalendar.today();
-    final isCurrent = ethToday.month == month;
+    final isCurrent = ethToday.month == month && ethToday.year == _selectedYear;
 
     return InkWell(
       onTap: () => _showAssignDialog(tsiwa, month, members),
@@ -505,7 +738,8 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
     List<AppUser> members,
   ) async {
     final monthName = AppConstants.ethiopianMonthName(month);
-    final currentId = tsiwa.monthlyOrder[month];
+    final yearOrder = _orderForYear(tsiwa, _selectedYear);
+    final currentId = yearOrder[month];
 
     final selected = await showDialog<String?>(
       context: context,
@@ -551,15 +785,29 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
     if (selected == null || !mounted) return;
 
     try {
-      final newOrder = Map<int, String>.from(tsiwa.monthlyOrder);
-      if (selected == '__clear__') {
-        newOrder.remove(month);
-      } else {
-        newOrder[month] = selected;
+      // Build updated order map preserving all years
+      final newAllOrders = Map<int, Map<int, String>>.from(
+        tsiwa.monthlyOrder.map((k, v) => MapEntry(k, Map<int, String>.from(v))),
+      );
+
+      // Resolve legacy year-0 to current year
+      final targetYear = _selectedYear;
+      if (newAllOrders.containsKey(0) && targetYear != 0) {
+        newAllOrders[targetYear] = Map<int, String>.from(newAllOrders[0]!);
+        newAllOrders.remove(0);
       }
+
+      final yearMap = newAllOrders[targetYear] ?? <int, String>{};
+      if (selected == '__clear__') {
+        yearMap.remove(month);
+      } else {
+        yearMap[month] = selected;
+      }
+      newAllOrders[targetYear] = yearMap;
+
       await _tsiwaRepository.updateTsiwa(
         widget.areaId,
-        tsiwa.copyWith(monthlyOrder: newOrder),
+        tsiwa.copyWith(monthlyOrder: newAllOrders),
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -615,12 +863,14 @@ class _SectionCard extends StatelessWidget {
   final String title;
   final IconData icon;
   final Color? iconColor;
+  final Widget? trailing;
   final List<Widget> children;
 
   const _SectionCard({
     required this.title,
     required this.icon,
     this.iconColor,
+    this.trailing,
     required this.children,
   });
 
@@ -636,13 +886,16 @@ class _SectionCard extends StatelessWidget {
               children: [
                 Icon(icon, size: 20, color: iconColor ?? AppTheme.textMuted),
                 const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
+                if (trailing != null) trailing!,
               ],
             ),
             const SizedBox(height: 12),

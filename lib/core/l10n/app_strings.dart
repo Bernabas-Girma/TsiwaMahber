@@ -665,4 +665,26 @@ class S {
   static String get allOrders => _am ? 'ሁሉም ተራዎች' : 'All Orders';
   static String daysRemaining(int d) => _am ? '$d ቀናት ቀርተዋል' : '$d days remaining';
   static String monthsRemaining(int m, int d) => _am ? '$m ወር ከ$d ቀናት' : '$m months $d days';
+
+  // ── Bulk add members ──
+  static String get addMembersFromGlobal =>
+      _am ? 'ማህበርተኞች ጨምር' : 'Add Members';
+  static String get selectMembersToAdd =>
+      _am ? 'ለዚህ ፅዋ የሚጨመሩ ማህበርተኞችን ይምረጡ' : 'Select members to add to this Tsiwa';
+  static String get noUnassignedMembers =>
+      _am ? 'ሁሉም አባላት ቀድሞ ተመድበዋል' : 'All members are already assigned';
+  static String membersAdded(int n) =>
+      _am ? '$n ማህበርተኞች ተጨምረዋል' : '$n members added';
+  static String get addingMembers =>
+      _am ? 'ማህበርተኞች በመጨመር ላይ...' : 'Adding members...';
+  static String get failedToAddMembers =>
+      _am ? 'ማህበርተኞች መጨመር አልተቻለም' : 'Failed to add members';
+  static String get searchMembers =>
+      _am ? 'ማህበርተኛ ፈልግ...' : 'Search members...';
+  static String selected(int n) =>
+      _am ? '$n ተመርጠዋል' : '$n selected';
+
+  // ── Year switcher ──
+  static String get year => _am ? 'ዓመት' : 'Year';
+  static String yearLabel(int y) => _am ? '$y ዓ.ም.' : 'Year $y';
 }

@@ -43,8 +43,8 @@ class TsiwaMahber {
   final int memberCount;
   final int museCount;
 
-  /// Maps month number (1-12) to member ID for monthly ordering.
-  final Map<int, String> monthlyOrder;
+  /// Maps Ethiopian year → (month 1-12 → member ID) for monthly ordering.
+  final Map<int, Map<int, String>> monthlyOrder;
 
   final bool isActive;
   final bool isArchived;
@@ -139,14 +139,42 @@ class TsiwaMahber {
     );
   }
 
-  static Map<int, String> _parseMonthlyOrder(dynamic raw) {
+  static Map<int, Map<int, String>> _parseMonthlyOrder(dynamic raw) {
     if (raw == null) return {};
     final map = Map<String, dynamic>.from(raw as Map);
-    return map.map((k, v) => MapEntry(int.parse(k), v as String));
+
+    // Detect old flat format: values are strings (month→uid)
+    // vs new nested format: values are maps (year→{month→uid})
+    if (map.isNotEmpty) {
+      final firstValue = map.values.first;
+      if (firstValue is String) {
+        // Old flat format — migrate to current year
+        final flatOrder = map.map(
+          (k, v) => MapEntry(int.parse(k), v as String),
+        );
+        return {0: flatOrder}; // year 0 = legacy, resolved on save
+      }
+    }
+
+    // New nested format: { "2018": { "1": "uid" } }
+    final result = <int, Map<int, String>>{};
+    for (final entry in map.entries) {
+      final year = int.parse(entry.key);
+      final inner = Map<String, dynamic>.from(entry.value as Map);
+      result[year] = inner.map(
+        (k, v) => MapEntry(int.parse(k), v as String),
+      );
+    }
+    return result;
   }
 
   Map<String, dynamic> _serializeMonthlyOrder() {
-    return monthlyOrder.map((k, v) => MapEntry(k.toString(), v));
+    return monthlyOrder.map(
+      (year, months) => MapEntry(
+        year.toString(),
+        months.map((k, v) => MapEntry(k.toString(), v)),
+      ),
+    );
   }
 
   Map<String, dynamic> toCreateMap() {
@@ -201,7 +229,7 @@ class TsiwaMahber {
     int? currentRotationIndex,
     int? memberCount,
     int? museCount,
-    Map<int, String>? monthlyOrder,
+    Map<int, Map<int, String>>? monthlyOrder,
     bool? isActive,
     bool? isArchived,
     DateTime? createdAt,

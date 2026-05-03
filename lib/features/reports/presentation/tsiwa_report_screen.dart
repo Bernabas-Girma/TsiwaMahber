@@ -136,7 +136,7 @@ class _TsiwaReportScreenState extends State<TsiwaReportScreen> {
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         final stat = _stats[group.x];
                         return BarTooltipItem(
-                          '${stat.tsiwa.name}\n${stat.totalMembers} አባላት',
+                          '${stat.tsiwa.name}\n${stat.totalMembers} ማህበርተኞች',
                           const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
