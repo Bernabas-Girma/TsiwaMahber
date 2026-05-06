@@ -363,6 +363,47 @@ class AuthRepository {
     return created;
   }
 
+  /// Ensure each edir in [edirIds] has an EdirMember doc for this user.
+  /// Skips creation if a doc with matching phone already exists.
+  Future<void> syncEdirMemberDocs({
+    required String areaId,
+    required List<String> edirIds,
+    required String displayName,
+    String christianName = '',
+    required String phone,
+  }) async {
+    for (final edirId in edirIds) {
+      final col = _firestore.collection(
+        'areas/$areaId/edirs/$edirId/members',
+      );
+      // Check if a doc with this phone already exists
+      final existing =
+          await col.where('phone', isEqualTo: phone).limit(1).get();
+      if (existing.docs.isNotEmpty) continue;
+
+      await col.add({
+        'fullName': displayName,
+        'christianName': christianName,
+        'phone': phone,
+        'status': 'active',
+        'totalPaid': 0,
+        'balance': 0,
+        'paidMonths': 0,
+        'lastPaymentDate': null,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Update member count
+      try {
+        final countSnap = await col.get();
+        await _firestore.doc('areas/$areaId/edirs/$edirId').update({
+          'memberCount': countSnap.docs.length,
+        });
+      } catch (_) {}
+    }
+  }
+
   // ── Firebase Auth (devs only) ──
 
   Future<void> signOut() async {

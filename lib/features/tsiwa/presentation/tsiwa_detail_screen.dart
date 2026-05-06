@@ -30,17 +30,21 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
   final _tsiwaRepository = TsiwaRepository();
   final _authRepository = AuthRepository();
   late int _selectedYear;
+  late final Stream<TsiwaMahber?> _tsiwaStream;
+  late final Stream<List<AppUser>> _membersStream;
 
   @override
   void initState() {
     super.initState();
     _selectedYear = EthiopianCalendar.today().year;
+    _tsiwaStream = _tsiwaRepository.watchTsiwa(widget.areaId, widget.tsiwaId);
+    _membersStream = _authRepository.watchMembersByTsiwa(widget.tsiwaId);
   }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<TsiwaMahber?>(
-      stream: _tsiwaRepository.watchTsiwa(widget.areaId, widget.tsiwaId),
+      stream: _tsiwaStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
@@ -205,7 +209,7 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
 
   Widget _buildMembersSection(TsiwaMahber tsiwa) {
     return StreamBuilder<List<AppUser>>(
-      stream: _authRepository.watchMembersByTsiwa(widget.tsiwaId),
+      stream: _membersStream,
       builder: (context, snapshot) {
         final members = snapshot.data ?? [];
         final museCount = members
@@ -607,7 +611,7 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
 
   Widget _buildMonthlyOrderSection(TsiwaMahber tsiwa) {
     return StreamBuilder<List<AppUser>>(
-      stream: _authRepository.watchMembersByTsiwa(widget.tsiwaId),
+      stream: _membersStream,
       builder: (context, snap) {
         final members = snap.data ?? [];
         final ethToday = EthiopianCalendar.today();
@@ -724,7 +728,18 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
                   ),
                 ),
               ),
-            const SizedBox(width: 4),
+            if (memberId != null) ...[
+              const SizedBox(width: 2),
+              InkWell(
+                onTap: () => _showSwapDialog(tsiwa, month, yearOrder, members),
+                borderRadius: BorderRadius.circular(12),
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(Icons.swap_vert, size: 16, color: Colors.deepPurple),
+                ),
+              ),
+            ],
+            const SizedBox(width: 2),
             const Icon(Icons.edit_outlined, size: 16, color: AppTheme.textMuted),
           ],
         ),
@@ -818,6 +833,98 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(S.orderSaveFailed)),
+        );
+      }
+    }
+  }
+
+  Future<void> _showSwapDialog(
+    TsiwaMahber tsiwa,
+    int fromMonth,
+    Map<int, String> yearOrder,
+    List<AppUser> members,
+  ) async {
+    final fromName = AppConstants.ethiopianMonthName(fromMonth);
+    final fromUid = yearOrder[fromMonth];
+
+    // Build list of other months that have assignments
+    final otherMonths = <int>[];
+    for (int m = 1; m <= AppConstants.tsiwaMonthCount; m++) {
+      if (m != fromMonth) otherMonths.add(m);
+    }
+
+    final targetMonth = await showDialog<int>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('$fromName — ${S.swapOrder}'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView(
+            shrinkWrap: true,
+            children: otherMonths.map((m) {
+              final uid = yearOrder[m];
+              final user = uid != null
+                  ? members.where((u) => u.uid == uid).firstOrNull
+                  : null;
+              final mName = AppConstants.ethiopianMonthName(m);
+              return ListTile(
+                dense: true,
+                title: Text(mName),
+                subtitle: Text(
+                  user?.displayName ?? S.unassigned,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: user != null ? null : AppTheme.textMuted,
+                  ),
+                ),
+                onTap: () => Navigator.pop(ctx, m),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+
+    if (targetMonth == null || !mounted) return;
+
+    try {
+      final newAllOrders = Map<int, Map<int, String>>.from(
+        tsiwa.monthlyOrder.map((k, v) => MapEntry(k, Map<int, String>.from(v))),
+      );
+      final targetYear = _selectedYear;
+      if (newAllOrders.containsKey(0) && targetYear != 0) {
+        newAllOrders[targetYear] = Map<int, String>.from(newAllOrders[0]!);
+        newAllOrders.remove(0);
+      }
+      final yearMap = newAllOrders[targetYear] ?? <int, String>{};
+
+      // Swap the two months
+      final toUid = yearMap[targetMonth];
+      if (fromUid != null) {
+        yearMap[targetMonth] = fromUid;
+      } else {
+        yearMap.remove(targetMonth);
+      }
+      if (toUid != null) {
+        yearMap[fromMonth] = toUid;
+      } else {
+        yearMap.remove(fromMonth);
+      }
+      newAllOrders[targetYear] = yearMap;
+
+      await _tsiwaRepository.updateTsiwa(
+        widget.areaId,
+        tsiwa.copyWith(monthlyOrder: newAllOrders),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.orderSwapped)),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.swapFailed)),
         );
       }
     }

@@ -364,6 +364,17 @@ class _GlobalMemberFormScreenState extends State<GlobalMemberFormScreen> {
         }
       }
 
+      // Sync edir member docs for any assigned edirs
+      if (_selectedEdirIds.isNotEmpty) {
+        await _authRepository.syncEdirMemberDocs(
+          areaId: AppConstants.defaultAreaId,
+          edirIds: _selectedEdirIds.toList(),
+          displayName: _nameController.text.trim(),
+          christianName: _christianNameController.text.trim(),
+          phone: _phoneController.text.trim(),
+        );
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(S.globalMemberSaved)),

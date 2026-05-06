@@ -29,6 +29,13 @@ class EdirMemberListScreen extends StatefulWidget {
 
 class _EdirMemberListScreenState extends State<EdirMemberListScreen> {
   final _repository = EdirRepository();
+  late final Stream<List<EdirMember>> _membersStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _membersStream = _repository.watchEdirMembers(widget.areaId, widget.edirId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,8 +44,7 @@ class _EdirMemberListScreenState extends State<EdirMemberListScreen> {
         title: Text('${widget.edirName} — አባላት'),
       ),
       body: StreamBuilder<List<EdirMember>>(
-        stream:
-            _repository.watchEdirMembers(widget.areaId, widget.edirId),
+        stream: _membersStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(

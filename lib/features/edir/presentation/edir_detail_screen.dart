@@ -25,11 +25,18 @@ class EdirDetailScreen extends StatefulWidget {
 
 class _EdirDetailScreenState extends State<EdirDetailScreen> {
   final _repository = EdirRepository();
+  late final Stream<Edir?> _edirStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _edirStream = _repository.watchEdir(widget.areaId, widget.edirId);
+  }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<Edir?>(
-      stream: _repository.watchEdir(widget.areaId, widget.edirId),
+      stream: _edirStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Scaffold(

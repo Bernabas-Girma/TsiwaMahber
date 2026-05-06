@@ -686,4 +686,20 @@ class S {
 
   // ── Year switcher ──
   static String yearLabel(int y) => _am ? '$y ዓ.ም.' : 'Year $y';
+
+  // ── Order swap ──
+  static String get swapOrder => _am ? 'ተራ ቀያይር' : 'Swap Order';
+  static String get swapWith => _am ? 'ከየትኛው ወር ጋር ይቀያይር?' : 'Swap with which month?';
+  static String get orderSwapped => _am ? 'ተራ ተቀይሯል' : 'Order swapped';
+  static String get swapFailed => _am ? 'ተራ መቀያየር አልተቻለም' : 'Swap failed';
+
+  // ── Tsiwa reorder ──
+  static String get reorderTsiwas => _am ? 'ፅዋ ማህበራትን ቅደም ተከተል ቀይር' : 'Reorder Tsiwas';
+  static String get orderUpdated => _am ? 'ቅደም ተከተል ተቀይሯል' : 'Order updated';
+
+  // ── Edir sync ──
+  static String get syncingEdirMembers =>
+      _am ? 'የእድር አባላት በማመሳሰል ላይ...' : 'Syncing edir members...';
+  static String get edirMembersSynced =>
+      _am ? 'የእድር አባላት ተመሳስለዋል' : 'Edir members synced';
 }

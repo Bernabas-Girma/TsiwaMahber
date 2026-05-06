@@ -25,6 +25,24 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
   final _tsiwaRepository = TsiwaRepository();
   final _authRepository = AuthRepository();
   final _announcementRepository = AnnouncementRepository();
+  final Map<String, Stream<TsiwaMahber?>> _tsiwaStreams = {};
+  final Map<String, Stream<List<AppUser>>> _memberStreams = {};
+  late final Stream<List<Announcement>> _announcementStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _announcementStream = _announcementRepository.watchAnnouncements(
+      AppConstants.defaultAreaId,
+    );
+    for (final id in widget.currentUser.assignedTsiwaIds) {
+      _tsiwaStreams[id] = _tsiwaRepository.watchTsiwa(
+        AppConstants.defaultAreaId,
+        id,
+      );
+      _memberStreams[id] = _authRepository.watchMembersByTsiwa(id);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +63,7 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
 
   Widget _buildTsiwaSection(String tsiwaId) {
     return StreamBuilder<TsiwaMahber?>(
-      stream: _tsiwaRepository.watchTsiwa(AppConstants.defaultAreaId, tsiwaId),
+      stream: _tsiwaStreams[tsiwaId],
       builder: (context, tsiwaSnap) {
         if (tsiwaSnap.connectionState == ConnectionState.waiting) {
           return const Padding(
@@ -152,7 +170,7 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
 
   Widget _buildRotationCalendar(TsiwaMahber tsiwa, String tsiwaId) {
     return StreamBuilder<List<AppUser>>(
-      stream: _authRepository.watchMembersByTsiwa(tsiwaId),
+      stream: _memberStreams[tsiwaId],
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -608,9 +626,7 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
         ),
         const SizedBox(height: 8),
         StreamBuilder<List<Announcement>>(
-          stream: _announcementRepository.watchAnnouncements(
-            AppConstants.defaultAreaId,
-          ),
+          stream: _announcementStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return LoadingState(message: S.loading);

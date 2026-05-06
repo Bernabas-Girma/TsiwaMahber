@@ -19,7 +19,14 @@ class GlobalMemberListScreen extends StatefulWidget {
 
 class _GlobalMemberListScreenState extends State<GlobalMemberListScreen> {
   final _authRepository = AuthRepository();
+  late final Stream<List<AppUser>> _usersStream;
   String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _usersStream = _authRepository.watchAllUsers();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +73,7 @@ class _GlobalMemberListScreenState extends State<GlobalMemberListScreen> {
 
   Widget _buildList() {
     return StreamBuilder<List<AppUser>>(
-      stream: _authRepository.watchAllUsers(),
+      stream: _usersStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(

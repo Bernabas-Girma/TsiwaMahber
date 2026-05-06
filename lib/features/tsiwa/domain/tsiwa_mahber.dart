@@ -49,6 +49,8 @@ class TsiwaMahber {
   final bool isActive;
   final bool isArchived;
 
+  final int sortOrder;
+
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -69,6 +71,7 @@ class TsiwaMahber {
     this.monthlyOrder = const {},
     this.isActive = true,
     this.isArchived = false,
+    this.sortOrder = 0,
     this.createdAt,
     this.updatedAt,
   });
@@ -134,6 +137,7 @@ class TsiwaMahber {
       monthlyOrder: _parseMonthlyOrder(data['monthlyOrder']),
       isActive: data['isActive'] as bool? ?? true,
       isArchived: data['isArchived'] as bool? ?? false,
+      sortOrder: data['sortOrder'] as int? ?? 0,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );
@@ -193,6 +197,7 @@ class TsiwaMahber {
       'monthlyOrder': _serializeMonthlyOrder(),
       'isActive': isActive,
       'isArchived': isArchived,
+      'sortOrder': sortOrder,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -211,6 +216,7 @@ class TsiwaMahber {
       'monthlyOrder': _serializeMonthlyOrder(),
       'isActive': isActive,
       'isArchived': isArchived,
+      'sortOrder': sortOrder,
       'updatedAt': FieldValue.serverTimestamp(),
     };
   }
@@ -232,6 +238,7 @@ class TsiwaMahber {
     Map<int, Map<int, String>>? monthlyOrder,
     bool? isActive,
     bool? isArchived,
+    int? sortOrder,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -252,6 +259,7 @@ class TsiwaMahber {
       monthlyOrder: monthlyOrder ?? this.monthlyOrder,
       isActive: isActive ?? this.isActive,
       isArchived: isArchived ?? this.isArchived,
+      sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
