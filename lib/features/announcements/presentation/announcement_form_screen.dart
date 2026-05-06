@@ -198,26 +198,31 @@ class _AnnouncementFormScreenState
             style: const TextStyle(
                 fontSize: 14, fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
-        if (canPostAll)
-          RadioListTile<AnnouncementTarget>(
-            title: Text(S.allMembers),
-            value: AnnouncementTarget.all,
-            groupValue: _targetType,
-            onChanged: (v) =>
-                setState(() => _targetType = v!),
-            dense: true,
-          ),
-        RadioListTile<AnnouncementTarget>(
-          title: Text(S.specificTsiwa),
-          value: AnnouncementTarget.tsiwa,
+        RadioGroup<AnnouncementTarget>(
           groupValue: _targetType,
-          onChanged: (v) => setState(() => _targetType = v!),
-          dense: true,
+          onChanged: (v) {
+            if (v != null) setState(() => _targetType = v);
+          },
+          child: Column(
+            children: [
+              if (canPostAll)
+                RadioListTile<AnnouncementTarget>(
+                  title: Text(S.allMembers),
+                  value: AnnouncementTarget.all,
+                  dense: true,
+                ),
+              RadioListTile<AnnouncementTarget>(
+                title: Text(S.specificTsiwa),
+                value: AnnouncementTarget.tsiwa,
+                dense: true,
+              ),
+            ],
+          ),
         ),
         if (_targetType == AnnouncementTarget.tsiwa) ...[
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: _selectedTsiwaId.isEmpty
+            initialValue: _selectedTsiwaId.isEmpty
                 ? null
                 : _selectedTsiwaId,
             decoration: InputDecoration(

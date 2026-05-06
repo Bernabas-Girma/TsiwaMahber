@@ -713,7 +713,6 @@ class S {
   static String get postTo => _am ? 'ለ' : 'Post to';
   static String get allMembers => _am ? 'ለሁሉም አባላት' : 'All members';
   static String get specificTsiwa => _am ? 'ለተወሰነ ፅዋ ማህበር' : 'Specific Tsiwa';
-  static String get selectTsiwa => _am ? 'ፅዋ ማህበር ይምረጡ' : 'Select Tsiwa';
   static String get announcementPosted =>
       _am ? 'ማስታወቂያ ተልኳል' : 'Announcement posted';
 
