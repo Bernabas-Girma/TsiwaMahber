@@ -60,6 +60,43 @@ class NotificationRepository {
     await batch.commit();
   }
 
+  Future<void> sendNotificationToTsiwaMembers({
+    required String tsiwaId,
+    required AppNotification notification,
+  }) async {
+    final usersSnapshot = await _firestore
+        .collection('users')
+        .where('assignedTsiwaIds', arrayContains: tsiwaId)
+        .where('isActive', isEqualTo: true)
+        .get();
+
+    for (int i = 0; i < usersSnapshot.docs.length; i += 500) {
+      final chunk = usersSnapshot.docs.sublist(
+        i,
+        i + 500 > usersSnapshot.docs.length
+            ? usersSnapshot.docs.length
+            : i + 500,
+      );
+      final batch = _firestore.batch();
+      for (final userDoc in chunk) {
+        final ref = _firestore
+            .collection(_userNotificationsPath(userDoc.id))
+            .doc();
+        batch.set(ref, notification.toCreateMap());
+      }
+      await batch.commit();
+    }
+  }
+
+  Future<void> sendNotificationToUser({
+    required String userId,
+    required AppNotification notification,
+  }) async {
+    await _firestore
+        .collection(_userNotificationsPath(userId))
+        .add(notification.toCreateMap());
+  }
+
   Future<void> markAsRead(String userId, String notificationId) async {
     await _firestore
         .doc('${_userNotificationsPath(userId)}/$notificationId')

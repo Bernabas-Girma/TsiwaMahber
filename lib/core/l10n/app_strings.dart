@@ -702,4 +702,45 @@ class S {
       _am ? 'የእድር አባላት በማመሳሰል ላይ...' : 'Syncing edir members...';
   static String get edirMembersSynced =>
       _am ? 'የእድር አባላት ተመሳስለዋል' : 'Edir members synced';
+
+  // ── Notification types ──
+  static String get notifTurnReminder =>
+      _am ? 'የተራ ማስታወሻ' : 'Turn Reminder';
+  static String get notifTurnAlert =>
+      _am ? 'የተራ ማሳወቂያ' : 'Turn Alert';
+
+  // ── Announcement targeting ──
+  static String get postTo => _am ? 'ለ' : 'Post to';
+  static String get allMembers => _am ? 'ለሁሉም አባላት' : 'All members';
+  static String get specificTsiwa => _am ? 'ለተወሰነ ፅዋ ማህበር' : 'Specific Tsiwa';
+  static String get selectTsiwa => _am ? 'ፅዋ ማህበር ይምረጡ' : 'Select Tsiwa';
+  static String get announcementPosted =>
+      _am ? 'ማስታወቂያ ተልኳል' : 'Announcement posted';
+
+  // ── Edir visibility ──
+  static String get hideEdir => _am ? 'እድር ደብቅ' : 'Hide Edir';
+  static String get showEdir => _am ? 'እድር አሳይ' : 'Show Edir';
+  static String get edirHidden => _am ? 'እድር ተደብቋል' : 'Edir hidden';
+  static String get edirVisible => _am ? 'እድር ይታያል' : 'Edir visible';
+  static String get hidden => _am ? 'የተደበቀ' : 'Hidden';
+
+  // ── Turn reminders ──
+  static String get sendReminder => _am ? 'ማስታወሻ ላክ' : 'Send Reminder';
+  static String get reminderSent => _am ? 'ማስታወሻ ተልኳል' : 'Reminder sent';
+  static String get sendAlert => _am ? 'ማሳወቂያ ላክ' : 'Send Alert';
+  static String get alertSent => _am ? 'ማሳወቂያ ተልኳል' : 'Alert sent';
+  static String get resendNotification =>
+      _am ? 'ማሳወቂያ ደግሞ ላክ' : 'Resend Notification';
+  static String get notificationResent =>
+      _am ? 'ማሳወቂያ ደግሞ ተልኳል' : 'Notification resent';
+  static String turnReminderBody(String month, int days) =>
+      _am
+          ? 'የ$month ወር ተራዎ $days ቀናት ቀርተዋል'
+          : 'Your turn in $month is $days days away';
+  static String turnAlertBody(String month) =>
+      _am ? 'የ$month ወር ተራዎ ደርሷል!' : 'Your turn for $month has arrived!';
+  static String turnReminderAll(String month, String name) =>
+      _am
+          ? 'የ$month ወር ተራ $name ነው'
+          : "$name's turn for $month";
 }

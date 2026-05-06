@@ -94,6 +94,8 @@ class _NotificationListScreenState
       NotificationType.announcement => Icons.campaign,
       NotificationType.event => Icons.event,
       NotificationType.payment => Icons.payment,
+      NotificationType.turnReminder => Icons.alarm,
+      NotificationType.turnAlert => Icons.notifications_active,
       NotificationType.system => Icons.info,
     };
 
@@ -101,6 +103,8 @@ class _NotificationListScreenState
       NotificationType.announcement => AppTheme.primary,
       NotificationType.event => Colors.blue,
       NotificationType.payment => Colors.green,
+      NotificationType.turnReminder => Colors.orange,
+      NotificationType.turnAlert => Colors.red,
       NotificationType.system => Colors.grey,
     };
 

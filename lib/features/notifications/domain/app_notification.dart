@@ -5,6 +5,8 @@ enum NotificationType {
   announcement,
   event,
   payment,
+  turnReminder,
+  turnAlert,
   system;
 
   String get displayName {
@@ -15,6 +17,10 @@ enum NotificationType {
         return S.notifEvent;
       case NotificationType.payment:
         return S.notifPayment;
+      case NotificationType.turnReminder:
+        return S.notifTurnReminder;
+      case NotificationType.turnAlert:
+        return S.notifTurnAlert;
       case NotificationType.system:
         return S.notifSystem;
     }
@@ -28,6 +34,10 @@ enum NotificationType {
         return 'event';
       case NotificationType.payment:
         return 'payment';
+      case NotificationType.turnReminder:
+        return 'turnReminder';
+      case NotificationType.turnAlert:
+        return 'turnAlert';
       case NotificationType.system:
         return 'system';
     }
@@ -41,6 +51,10 @@ enum NotificationType {
         return NotificationType.event;
       case 'payment':
         return NotificationType.payment;
+      case 'turnReminder':
+        return NotificationType.turnReminder;
+      case 'turnAlert':
+        return NotificationType.turnAlert;
       case 'system':
         return NotificationType.system;
       default:

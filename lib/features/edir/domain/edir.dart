@@ -10,6 +10,7 @@ class Edir {
   final int memberCount;
   final int paymentDay;
   final bool isActive;
+  final bool isHidden;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -23,6 +24,7 @@ class Edir {
     this.memberCount = 0,
     this.paymentDay = 1,
     this.isActive = true,
+    this.isHidden = false,
     this.createdAt,
     this.updatedAt,
   });
@@ -40,6 +42,7 @@ class Edir {
       memberCount: data['memberCount'] as int? ?? 0,
       paymentDay: data['paymentDay'] as int? ?? 1,
       isActive: data['isActive'] as bool? ?? true,
+      isHidden: data['isHidden'] as bool? ?? false,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );
@@ -55,6 +58,7 @@ class Edir {
       'memberCount': 0,
       'paymentDay': paymentDay,
       'isActive': isActive,
+      'isHidden': isHidden,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -69,6 +73,7 @@ class Edir {
       'treasury': treasury,
       'paymentDay': paymentDay,
       'isActive': isActive,
+      'isHidden': isHidden,
       'updatedAt': FieldValue.serverTimestamp(),
     };
   }
@@ -83,6 +88,7 @@ class Edir {
     int? memberCount,
     int? paymentDay,
     bool? isActive,
+    bool? isHidden,
   }) {
     return Edir(
       id: id ?? this.id,
@@ -95,6 +101,7 @@ class Edir {
       memberCount: memberCount ?? this.memberCount,
       paymentDay: paymentDay ?? this.paymentDay,
       isActive: isActive ?? this.isActive,
+      isHidden: isHidden ?? this.isHidden,
     );
   }
 }

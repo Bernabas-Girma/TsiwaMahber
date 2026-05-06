@@ -10,6 +10,8 @@ import 'package:tsiwa_mahber/features/tsiwa/data/tsiwa_repository.dart';
 import 'package:tsiwa_mahber/features/tsiwa/domain/tsiwa_mahber.dart';
 import 'package:tsiwa_mahber/features/tsiwa/presentation/rotation_screen.dart';
 import 'package:tsiwa_mahber/features/tsiwa/presentation/tsiwa_form_screen.dart';
+import 'package:tsiwa_mahber/features/notifications/data/notification_repository.dart';
+import 'package:tsiwa_mahber/features/notifications/domain/app_notification.dart';
 import 'package:tsiwa_mahber/core/l10n/app_strings.dart';
 
 class TsiwaDetailScreen extends StatefulWidget {
@@ -29,6 +31,7 @@ class TsiwaDetailScreen extends StatefulWidget {
 class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
   final _tsiwaRepository = TsiwaRepository();
   final _authRepository = AuthRepository();
+  final _notificationRepository = NotificationRepository();
   late int _selectedYear;
   late final Stream<TsiwaMahber?> _tsiwaStream;
   late final Stream<List<AppUser>> _membersStream;
@@ -738,6 +741,17 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
                   child: Icon(Icons.swap_vert, size: 16, color: Colors.deepPurple),
                 ),
               ),
+              const SizedBox(width: 2),
+              InkWell(
+                onTap: () => _showNotifyMenu(
+                    tsiwa, month, memberId, assigned, members),
+                borderRadius: BorderRadius.circular(12),
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(Icons.notifications_active,
+                      size: 16, color: Colors.orange),
+                ),
+              ),
             ],
             const SizedBox(width: 2),
             const Icon(Icons.edit_outlined, size: 16, color: AppTheme.textMuted),
@@ -927,6 +941,145 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
           SnackBar(content: Text(S.swapFailed)),
         );
       }
+    }
+  }
+
+  void _showNotifyMenu(
+    TsiwaMahber tsiwa,
+    int month,
+    String memberId,
+    AppUser? assigned,
+    List<AppUser> allMembers,
+  ) {
+    final monthName = AppConstants.ethiopianMonthName(month);
+    final ethToday = EthiopianCalendar.today();
+    int daysRemaining = 0;
+    if (_selectedYear == ethToday.year && month > ethToday.month) {
+      daysRemaining = (month - ethToday.month) * 30 - ethToday.day;
+      if (daysRemaining < 0) daysRemaining = 0;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  '$monthName — ${assigned?.displayName ?? ""}',
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.alarm, color: Colors.orange),
+                title: Text(S.sendReminder),
+                subtitle: daysRemaining > 0
+                    ? Text(S.turnReminderBody(monthName, daysRemaining))
+                    : null,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _sendTurnReminder(
+                      tsiwa, month, memberId, assigned, allMembers);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.campaign, color: Colors.red),
+                title: Text(S.sendAlert),
+                subtitle: Text(S.turnAlertBody(monthName)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _sendTurnAlert(
+                      tsiwa, month, memberId, assigned, allMembers);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _sendTurnReminder(
+    TsiwaMahber tsiwa,
+    int month,
+    String memberId,
+    AppUser? assigned,
+    List<AppUser> allMembers,
+  ) async {
+    final monthName = AppConstants.ethiopianMonthName(month);
+    final ethToday = EthiopianCalendar.today();
+    int daysRemaining = 0;
+    if (_selectedYear == ethToday.year && month > ethToday.month) {
+      daysRemaining = (month - ethToday.month) * 30 - ethToday.day;
+    }
+
+    final personalNotif = AppNotification(
+      title: S.notifTurnReminder,
+      body: S.turnReminderBody(monthName, daysRemaining),
+      type: NotificationType.turnReminder,
+    );
+    await _notificationRepository.sendNotificationToUser(
+      userId: memberId,
+      notification: personalNotif,
+    );
+
+    final groupNotif = AppNotification(
+      title: '${tsiwa.name} — $monthName',
+      body: S.turnReminderAll(
+          monthName, assigned?.displayName ?? ''),
+      type: NotificationType.turnReminder,
+    );
+    await _notificationRepository.sendNotificationToTsiwaMembers(
+      tsiwaId: widget.tsiwaId,
+      notification: groupNotif,
+    );
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.reminderSent)),
+      );
+    }
+  }
+
+  Future<void> _sendTurnAlert(
+    TsiwaMahber tsiwa,
+    int month,
+    String memberId,
+    AppUser? assigned,
+    List<AppUser> allMembers,
+  ) async {
+    final monthName = AppConstants.ethiopianMonthName(month);
+
+    final personalNotif = AppNotification(
+      title: S.notifTurnAlert,
+      body: S.turnAlertBody(monthName),
+      type: NotificationType.turnAlert,
+    );
+    await _notificationRepository.sendNotificationToUser(
+      userId: memberId,
+      notification: personalNotif,
+    );
+
+    final groupNotif = AppNotification(
+      title: '${tsiwa.name} — $monthName',
+      body: S.turnReminderAll(
+          monthName, assigned?.displayName ?? ''),
+      type: NotificationType.turnAlert,
+    );
+    await _notificationRepository.sendNotificationToTsiwaMembers(
+      tsiwaId: widget.tsiwaId,
+      notification: groupNotif,
+    );
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.alertSent)),
+      );
     }
   }
 

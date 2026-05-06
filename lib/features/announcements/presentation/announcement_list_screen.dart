@@ -9,6 +9,8 @@ import 'package:tsiwa_mahber/features/announcements/presentation/announcement_de
 import 'package:tsiwa_mahber/features/announcements/presentation/announcement_form_screen.dart';
 import 'package:tsiwa_mahber/features/auth/domain/app_user.dart';
 import 'package:tsiwa_mahber/core/l10n/app_strings.dart';
+import 'package:tsiwa_mahber/features/notifications/data/notification_repository.dart';
+import 'package:tsiwa_mahber/features/notifications/domain/app_notification.dart';
 
 class AnnouncementListScreen extends StatefulWidget {
   final String areaId;
@@ -28,12 +30,30 @@ class AnnouncementListScreen extends StatefulWidget {
 class _AnnouncementListScreenState
     extends State<AnnouncementListScreen> {
   final _repository = AnnouncementRepository();
+  final _notificationRepository = NotificationRepository();
+
+  bool get _canCreate {
+    final role = widget.currentUser?.role;
+    if (role == null) return false;
+    if (role.canEdit) return true;
+    final user = widget.currentUser!;
+    return user.tsiwaRoles.values.any((r) => r == 'muse');
+  }
+
+  bool _canSeeAnnouncement(Announcement a) {
+    final user = widget.currentUser;
+    if (user == null) return true;
+    if (user.role.canEdit) return true;
+
+    if (a.targetType == AnnouncementTarget.all) return true;
+    if (a.targetType == AnnouncementTarget.tsiwa) {
+      return user.assignedTsiwaIds.contains(a.targetId);
+    }
+    return true;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final canCreate =
-        widget.currentUser?.role.canEdit == true;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('ማስታወቂያዎች'),
@@ -54,16 +74,18 @@ class _AnnouncementListScreenState
             return LoadingState(message: S.loading);
           }
 
-          final announcements = snapshot.data ?? [];
+          final all = snapshot.data ?? [];
+          final announcements =
+              all.where(_canSeeAnnouncement).toList();
 
           if (announcements.isEmpty) {
             return EmptyState(
               icon: Icons.campaign,
               title: S.noAnnouncementsYet,
-              message: canCreate
+              message: _canCreate
                   ? S.addAnnouncementHint
                   : '',
-              action: canCreate
+              action: _canCreate
                   ? ElevatedButton.icon(
                       onPressed: _openCreateForm,
                       icon: const Icon(Icons.add),
@@ -81,7 +103,7 @@ class _AnnouncementListScreenState
           );
         },
       ),
-      floatingActionButton: canCreate
+      floatingActionButton: _canCreate
           ? FloatingActionButton(
               onPressed: _openCreateForm,
               child: const Icon(Icons.add),
@@ -104,6 +126,8 @@ class _AnnouncementListScreenState
     };
 
     final userId = widget.currentUser?.uid ?? '';
+    final isAdmin = widget.currentUser?.role.canEdit == true;
+    final isDev = widget.currentUser?.role.isDeveloper == true;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -170,6 +194,19 @@ class _AnnouncementListScreenState
                           ),
                       ],
                     ),
+                    if (announcement.targetType ==
+                            AnnouncementTarget.tsiwa &&
+                        announcement.targetName.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          announcement.targetName,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.deepPurple.shade300,
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 4),
                     Text(
                       announcement.body.length > 80
@@ -227,13 +264,15 @@ class _AnnouncementListScreenState
                   ],
                 ),
               ),
-              if (widget.currentUser?.role.canEdit == true)
+              if (isAdmin)
                 PopupMenuButton<String>(
                   onSelected: (value) {
                     if (value == 'edit') {
                       _openEditForm(announcement);
                     } else if (value == 'delete') {
                       _confirmDelete(announcement);
+                    } else if (value == 'resend') {
+                      _resendNotification(announcement);
                     }
                   },
                   itemBuilder: (context) => [
@@ -241,13 +280,23 @@ class _AnnouncementListScreenState
                       value: 'edit',
                       child: Text(S.edit),
                     ),
+                    PopupMenuItem(
+                      value: 'resend',
+                      child: Text(S.resendNotification),
+                    ),
                     if (widget.currentUser?.role.canDelete == true)
                       PopupMenuItem(
                         value: 'delete',
                         child: Text(S.delete,
-                            style: TextStyle(color: Colors.red)),
+                            style: const TextStyle(color: Colors.red)),
                       ),
                   ],
+                )
+              else if (isDev)
+                IconButton(
+                  icon: const Icon(Icons.replay, size: 20),
+                  tooltip: S.resendNotification,
+                  onPressed: () => _resendNotification(announcement),
                 ),
             ],
           ),
@@ -279,6 +328,37 @@ class _AnnouncementListScreenState
         ),
       ),
     );
+  }
+
+  Future<void> _resendNotification(Announcement announcement) async {
+    final notification = AppNotification(
+      title: 'ማስታወቂያ: ${announcement.title}',
+      body: announcement.body.length > 100
+          ? '${announcement.body.substring(0, 100)}...'
+          : announcement.body,
+      type: NotificationType.announcement,
+      senderId: widget.currentUser?.uid,
+      senderName: widget.currentUser?.displayName,
+    );
+
+    if (announcement.targetType == AnnouncementTarget.tsiwa &&
+        announcement.targetId.isNotEmpty) {
+      await _notificationRepository.sendNotificationToTsiwaMembers(
+        tsiwaId: announcement.targetId,
+        notification: notification,
+      );
+    } else {
+      await _notificationRepository.sendNotificationToAll(
+        areaId: widget.areaId,
+        notification: notification,
+      );
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.notificationResent)),
+      );
+    }
   }
 
   Future<void> _confirmDelete(Announcement announcement) async {

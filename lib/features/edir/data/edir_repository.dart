@@ -47,6 +47,14 @@ class EdirRepository {
     await _firestore.doc(FirestorePaths.edir(areaId, edirId)).delete();
   }
 
+  Future<void> toggleEdirHidden(
+      String areaId, String edirId, bool hidden) async {
+    await _firestore.doc(FirestorePaths.edir(areaId, edirId)).update({
+      'isHidden': hidden,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   // --- Edir Members ---
 
   Stream<List<EdirMember>> watchEdirMembers(String areaId, String edirId) {

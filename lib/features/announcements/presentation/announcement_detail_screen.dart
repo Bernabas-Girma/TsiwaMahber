@@ -30,6 +30,12 @@ class _AnnouncementDetailScreenState
   final _repository = AnnouncementRepository();
   bool _isMarking = false;
 
+  bool get _canSeeReadReceipts {
+    final role = widget.currentUser?.role;
+    if (role == null) return false;
+    return role.canEdit || role.isDeveloper;
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<Announcement?>(
@@ -78,7 +84,8 @@ class _AnnouncementDetailScreenState
                 const SizedBox(height: 16),
                 _buildReadButton(announcement),
                 const SizedBox(height: 24),
-                _buildReadReceipts(),
+                if (_canSeeReadReceipts)
+                  _buildReadReceipts(),
               ],
             ),
           ),
@@ -155,19 +162,21 @@ class _AnnouncementDetailScreenState
                 ],
               ],
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.visibility, size: 14,
-                    color: AppTheme.textMuted),
-                const SizedBox(width: 4),
-                Text(
-                  '${announcement.readCount} ሰው አንብበዋል',
-                  style: const TextStyle(
-                      fontSize: 13, color: AppTheme.textMuted),
-                ),
-              ],
-            ),
+            if (_canSeeReadReceipts) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.visibility, size: 14,
+                      color: AppTheme.textMuted),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${announcement.readCount} ሰው አንብበዋል',
+                    style: const TextStyle(
+                        fontSize: 13, color: AppTheme.textMuted),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

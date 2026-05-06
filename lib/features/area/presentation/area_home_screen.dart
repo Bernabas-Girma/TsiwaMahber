@@ -337,6 +337,7 @@ class _AreaHomeScreenState extends State<AreaHomeScreen> {
               MaterialPageRoute(
                 builder: (context) => EdirListScreen(
                   areaId: widget.areaId,
+                  currentUser: widget.currentUser,
                 ),
               ),
             );

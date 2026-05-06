@@ -8,13 +8,16 @@ import 'package:tsiwa_mahber/features/edir/domain/edir.dart';
 import 'package:tsiwa_mahber/features/edir/presentation/edir_detail_screen.dart';
 import 'package:tsiwa_mahber/features/edir/presentation/edir_form_screen.dart';
 import 'package:tsiwa_mahber/core/l10n/app_strings.dart';
+import 'package:tsiwa_mahber/features/auth/domain/app_user.dart';
 
 class EdirListScreen extends StatefulWidget {
   final String areaId;
+  final AppUser? currentUser;
 
   const EdirListScreen({
     super.key,
     required this.areaId,
+    this.currentUser,
   });
 
   @override
@@ -53,7 +56,12 @@ class _EdirListScreenState extends State<EdirListScreen> {
             return LoadingState(message: S.loading);
           }
 
-          final edirs = snapshot.data ?? [];
+          final all = snapshot.data ?? [];
+          final isAdmin =
+              widget.currentUser?.role.canEdit == true;
+          final edirs = isAdmin
+              ? all
+              : all.where((e) => !e.isHidden).toList();
 
           if (edirs.isEmpty) {
             return EmptyState(
@@ -109,9 +117,11 @@ class _EdirListScreenState extends State<EdirListScreen> {
                   color: AppTheme.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.account_balance_wallet,
-                  color: AppTheme.primary,
+                  color: edir.isHidden
+                      ? AppTheme.textMuted
+                      : AppTheme.primary,
                   size: 28,
                 ),
               ),
@@ -120,12 +130,32 @@ class _EdirListScreenState extends State<EdirListScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      edir.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            edir.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        if (edir.isHidden)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              S.hidden,
+                              style: const TextStyle(
+                                  fontSize: 10, color: Colors.orange),
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -153,6 +183,8 @@ class _EdirListScreenState extends State<EdirListScreen> {
                 onSelected: (value) {
                   if (value == 'edit') {
                     _openEditForm(edir);
+                  } else if (value == 'toggleHidden') {
+                    _toggleHidden(edir);
                   } else if (value == 'delete') {
                     _confirmDelete(edir);
                   }
@@ -165,6 +197,21 @@ class _EdirListScreenState extends State<EdirListScreen> {
                         Icon(Icons.edit, size: 18),
                         SizedBox(width: 8),
                         Text(S.edit),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'toggleHidden',
+                    child: Row(
+                      children: [
+                        Icon(
+                          edir.isHidden
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(edir.isHidden ? S.showEdir : S.hideEdir),
                       ],
                     ),
                   ),
@@ -204,6 +251,27 @@ class _EdirListScreenState extends State<EdirListScreen> {
             EdirFormScreen(areaId: widget.areaId, edir: edir),
       ),
     );
+  }
+
+  Future<void> _toggleHidden(Edir edir) async {
+    try {
+      await _repository.toggleEdirHidden(
+          widget.areaId, edir.id, !edir.isHidden);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                edir.isHidden ? S.edirVisible : S.edirHidden),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ስህተት: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _confirmDelete(Edir edir) async {
