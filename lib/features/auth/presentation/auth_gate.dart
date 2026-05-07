@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tsiwa_mahber/core/l10n/app_strings.dart';
@@ -13,7 +14,10 @@ import 'package:tsiwa_mahber/features/area/presentation/area_home_screen.dart';
 import 'package:tsiwa_mahber/features/developer/data/developer_service.dart';
 import 'package:tsiwa_mahber/features/member_home/presentation/member_home_screen.dart';
 import 'package:tsiwa_mahber/core/services/notification_listener_service.dart';
+import 'package:tsiwa_mahber/core/services/local_notification_service.dart';
 import 'package:tsiwa_mahber/core/constants/app_constants.dart';
+import 'package:tsiwa_mahber/features/announcements/presentation/announcement_detail_screen.dart';
+import 'package:tsiwa_mahber/features/chat/presentation/chat_screen.dart';
 
 class AuthGate extends StatefulWidget {
   final ThemeProvider themeProvider;
@@ -49,6 +53,52 @@ class _AuthGateState extends State<AuthGate> {
   void initState() {
     super.initState();
     _authStream = _authRepository.authStateChanges;
+    _setupNotificationTapHandler();
+  }
+
+  void _setupNotificationTapHandler() {
+    LocalNotificationService.onNotificationTap = (payload) {
+      try {
+        final data = jsonDecode(payload) as Map<String, dynamic>;
+        final type = data['type'] as String?;
+        final ctx = context;
+        if (!mounted) return;
+
+        if (type == 'announcement') {
+          final announcementId = data['announcementId'] as String?;
+          final areaId = data['areaId'] as String?;
+          if (announcementId != null && areaId != null) {
+            final user = _memberUser ?? _devUser;
+            Navigator.of(ctx).push(
+              MaterialPageRoute(
+                builder: (_) => AnnouncementDetailScreen(
+                  areaId: areaId,
+                  announcementId: announcementId,
+                  currentUser: user,
+                ),
+              ),
+            );
+          }
+        } else if (type == 'chat') {
+          final roomId = data['roomId'] as String?;
+          final roomName = data['roomName'] as String? ?? 'Chat';
+          final areaId = data['areaId'] as String?;
+          final user = _memberUser ?? _devUser;
+          if (roomId != null && areaId != null && user != null) {
+            Navigator.of(ctx).push(
+              MaterialPageRoute(
+                builder: (_) => ChatScreen(
+                  areaId: areaId,
+                  roomId: roomId,
+                  roomName: roomName,
+                  currentUser: user,
+                ),
+              ),
+            );
+          }
+        }
+      } catch (_) {}
+    };
   }
 
   Future<void> _initDefaults() async {

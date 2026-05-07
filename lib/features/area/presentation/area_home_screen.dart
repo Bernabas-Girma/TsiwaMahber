@@ -31,6 +31,7 @@ import 'package:tsiwa_mahber/features/global_members/presentation/global_member_
 import 'package:tsiwa_mahber/core/l10n/app_strings.dart';
 import 'package:tsiwa_mahber/core/constants/app_constants.dart';
 import 'package:tsiwa_mahber/features/chat/presentation/chat_rooms_screen.dart';
+import 'package:tsiwa_mahber/features/settings/presentation/security_settings_screen.dart';
 
 class AreaHomeScreen extends StatefulWidget {
   final AppUser? currentUser;
@@ -129,7 +130,7 @@ class _AreaHomeScreenState extends State<AreaHomeScreen> {
           ),
         ],
       ),
-      body: _buildContent(),
+      body: SafeArea(child: _buildContent()),
     );
   }
 
@@ -446,6 +447,23 @@ class _AreaHomeScreenState extends State<AreaHomeScreen> {
             );
           },
         ),
+        if (role?.isDeveloper == true)
+          AppInfoCard(
+            icon: Icons.security,
+            title: S.passwordChangeSettings,
+            subtitle: S.enablePasswordChangeGlobal,
+            iconColor: Colors.orange,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SecuritySettingsScreen(
+                    areaId: widget.areaId,
+                  ),
+                ),
+              );
+            },
+          ),
         if (role?.isDeveloper == true)
           AppInfoCard(
             icon: Icons.code,

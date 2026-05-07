@@ -189,8 +189,8 @@ class _ChatScreenState extends State<ChatScreen> {
               horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: isMe
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                ? Color.lerp(Theme.of(context).colorScheme.primary, Colors.white, 0.15)!
+                : Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(16),
               topRight: const Radius.circular(16),
@@ -214,7 +214,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.85),
                     ),
                   ),
                 ),
@@ -336,17 +336,17 @@ class _ChatScreenState extends State<ChatScreen> {
                     horizontal: 12, vertical: 6),
                 margin: const EdgeInsets.only(bottom: 4),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
                     Icon(Icons.edit,
-                        size: 14, color: Theme.of(context).colorScheme.primary),
+                        size: 14, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7)),
                     const SizedBox(width: 6),
                     Text(S.editingMessage,
                         style: TextStyle(
-                            fontSize: 12, color: Theme.of(context).colorScheme.primary)),
+                            fontSize: 12, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7))),
                     const Spacer(),
                     GestureDetector(
                       onTap: _cancelEditing,
@@ -372,7 +372,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       filled: true,
                       fillColor:
-                          Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
+                          Theme.of(context).colorScheme.primary.withValues(alpha: 0.04),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 10),
                     ),

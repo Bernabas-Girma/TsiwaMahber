@@ -94,7 +94,7 @@ class S {
       _am ? 'ስም እና አጭር ስም ያስፈልጋል' : 'Name and short name are required';
 
   // ── Area Home ──
-  static String get notifications => _am ? 'ማሳወቂያዎች' : 'Notifications';
+  static String get notifications => _am ? 'ማሳሰቢያዎች' : 'Notifications';
   static String get users => _am ? 'ተጠቃሚዎች' : 'Users';
   static String get profile => _am ? 'መገለጫ' : 'Profile';
   static String get tsiwaGroups => _am ? 'ፅዋ ማህበሮች' : 'Tsiwa Groups';
@@ -353,16 +353,16 @@ class S {
       : 'You can record payments from the member list';
 
   // ── Notifications ──
-  static String get notificationTitle => _am ? 'ማሳወቂያዎች' : 'Notifications';
+  static String get notificationTitle => _am ? 'ማሳሰቢያዎች' : 'Notifications';
   static String get markAllRead =>
       _am ? 'ሁሉንም እንደተነበበ ምልክት አድርግ' : 'Mark all as read';
   static String get clearAll => _am ? 'ሁሉንም አጽዳ' : 'Clear all';
   static String get noNotifications =>
-      _am ? 'ምንም ማሳወቂያ የለም' : 'No notifications';
+      _am ? 'ምንም ማሳሰቢያ የለም' : 'No notifications';
   static String get clearAllConfirm =>
-      _am ? 'ሁሉንም ማሳወቂያዎች አጽዳ' : 'Clear all notifications';
+      _am ? 'ሁሉንም ማሳሰቢያዎች አጽዳ' : 'Clear all notifications';
   static String get clearAllConfirmMsg => _am
-      ? 'ሁሉንም ማሳወቂያዎች ለመሰረዝ እርግጠኛ ነዎት?'
+      ? 'ሁሉንም ማሳሰቢያዎች ለመሰረዝ እርግጠኛ ነዎት?'
       : 'Are you sure you want to clear all notifications?';
   static String get clear => _am ? 'አጽዳ' : 'Clear';
 
@@ -857,4 +857,30 @@ class S {
           : 'Track turns on Ethiopian calendar, see days until next Tsiwa';
   static String get getStarted => _am ? 'ጀምር' : 'Get Started';
   static String get skip => _am ? 'ዝለል' : 'Skip';
+
+  // ── Password change enable/disable ──
+  static String get passwordChangeSettings =>
+      _am ? 'የይለፍ ቃል ቅንብሮች' : 'Password Change Settings';
+  static String get enablePasswordChange =>
+      _am ? 'የይለፍ ቃል ለውጥ ይፍቀዱ' : 'Enable Password Change';
+  static String get enablePasswordChangeGlobal =>
+      _am ? 'ለሁሉም አባላት' : 'For all members';
+  static String get disablePasswordChange =>
+      _am ? 'የይለፍ ቃል ለውጥ ይከልክሉ' : 'Disable Password Change';
+  static String get passwordChangeEnabled =>
+      _am ? 'የይለፍ ቃል ለውጥ ተፈቅዷል' : 'Password change enabled';
+  static String get passwordChangeDisabled =>
+      _am ? 'የይለፍ ቃል ለውጥ ተከልክሏል' : 'Password change disabled';
+
+  // ── Chat notifications ──
+  static String get chatNotifications =>
+      _am ? 'የውይይት ማሳሰቢያ' : 'Chat Notifications';
+  static String get enableNotifications =>
+      _am ? 'ማሳሰቢያ ያብሩ' : 'Enable Notifications';
+  static String get disableNotifications =>
+      _am ? 'ማሳሰቢያ ያጥፉ' : 'Disable Notifications';
+  static String get notificationsEnabled =>
+      _am ? 'ማሳሰቢያ ተብርቷል' : 'Notifications enabled';
+  static String get notificationsDisabled =>
+      _am ? 'ማሳሰቢያ ጠፍቷል' : 'Notifications disabled';
 }

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:tsiwa_mahber/app.dart';
 import 'package:tsiwa_mahber/firebase_options.dart';
 import 'package:tsiwa_mahber/core/services/local_notification_service.dart';
@@ -10,6 +11,13 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Make the system navigation bar transparent so it doesn't overlap content
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarDividerColor: Colors.transparent,
+  ));
 
   // Enable offline persistence with unlimited cache for better performance
   FirebaseFirestore.instance.settings = const Settings(

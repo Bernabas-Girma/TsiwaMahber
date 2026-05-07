@@ -119,6 +119,15 @@ class ChatRepository {
     });
   }
 
+  // ── Notification toggle ──
+
+  Future<void> toggleNotifications(
+      String areaId, String roomId, bool enabled) {
+    return _roomsRef(areaId).doc(roomId).update({
+      'notificationsEnabled': enabled,
+    });
+  }
+
   // ── Message operations ──
 
   Stream<List<ChatMessage>> watchMessages(

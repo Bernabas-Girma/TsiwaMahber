@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:tsiwa_mahber/core/constants/app_constants.dart';
 import 'package:tsiwa_mahber/core/theme/app_theme.dart';
 import 'package:tsiwa_mahber/features/auth/data/auth_repository.dart';
 import 'package:tsiwa_mahber/features/auth/domain/app_user.dart';
@@ -198,23 +200,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
           const SizedBox(height: 16),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.lock_outline),
-              title: Text(S.changeCode),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ChangeCodeScreen(
-                      user: widget.user,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
+          _buildChangeCodeTile(),
           const SizedBox(height: 16),
           Card(
             child: ListTile(
@@ -235,6 +221,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildChangeCodeTile() {
+    // Devs can always change their code
+    if (widget.user.role.isDeveloper) {
+      return Card(
+        child: ListTile(
+          leading: const Icon(Icons.lock_outline),
+          title: Text(S.changeCode),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => _openChangeCode(),
+        ),
+      );
+    }
+
+    // For members, check Firestore security settings
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('areas')
+          .doc(AppConstants.defaultAreaId)
+          .collection('settings')
+          .doc('security')
+          .snapshots(),
+      builder: (context, snapshot) {
+        final data = snapshot.data?.data() ?? {};
+        final globalEnabled = data['passwordChangeEnabled'] as bool? ?? true;
+        final disabledUsers = List<String>.from(
+            data['passwordChangeDisabledUsers'] as List? ?? []);
+        final isDisabledForUser = disabledUsers.contains(widget.user.uid);
+        final canChange = globalEnabled && !isDisabledForUser;
+
+        if (!canChange) return const SizedBox.shrink();
+
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.lock_outline),
+            title: Text(S.changeCode),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _openChangeCode(),
+          ),
+        );
+      },
+    );
+  }
+
+  void _openChangeCode() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChangeCodeScreen(user: widget.user),
       ),
     );
   }

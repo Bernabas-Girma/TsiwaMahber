@@ -66,6 +66,9 @@ class ChatRoom {
   /// If non-null, all non-admin members are muted until this time.
   final DateTime? mutedUntil;
 
+  /// Whether push notifications are enabled for this room.
+  final bool notificationsEnabled;
+
   const ChatRoom({
     this.id = '',
     this.areaId = '',
@@ -79,6 +82,7 @@ class ChatRoom {
     this.memberIds = const [],
     this.restrictedMemberIds = const [],
     this.mutedUntil,
+    this.notificationsEnabled = true,
   });
 
   factory ChatRoom.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -98,6 +102,7 @@ class ChatRoom {
       restrictedMemberIds: List<String>.from(
           data['restrictedMemberIds'] as List<dynamic>? ?? []),
       mutedUntil: (data['mutedUntil'] as Timestamp?)?.toDate(),
+      notificationsEnabled: data['notificationsEnabled'] as bool? ?? true,
     );
   }
 
@@ -117,6 +122,7 @@ class ChatRoom {
       'restrictedMemberIds': restrictedMemberIds,
       if (mutedUntil != null)
         'mutedUntil': Timestamp.fromDate(mutedUntil!),
+      'notificationsEnabled': notificationsEnabled,
     };
   }
 

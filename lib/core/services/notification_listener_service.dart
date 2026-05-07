@@ -42,6 +42,7 @@ class NotificationListenerService {
       sub.cancel();
     }
     _subs.clear();
+    _watchedRooms.clear();
     _started = false;
   }
 
@@ -71,6 +72,8 @@ class NotificationListenerService {
       await _notifService.showAnnouncementNotification(
         title: title,
         body: body.length > 100 ? '${body.substring(0, 100)}...' : body,
+        announcementId: doc.id,
+        areaId: _areaId!,
         urgent: priority == 'urgent',
       );
     });
@@ -80,14 +83,19 @@ class NotificationListenerService {
   // ── Chat messages ──
 
   void _watchChatMessages() {
-    // Watch all chat rooms for this area, then listen to latest message
     final roomsSub = _firestore
         .collection('areas/$_areaId/chatRooms')
         .where('isEnabled', isEqualTo: true)
         .snapshots()
         .listen((roomSnapshot) {
       for (final roomDoc in roomSnapshot.docs) {
-        _watchRoomMessages(roomDoc.id, roomDoc.data());
+        final roomData = roomDoc.data();
+        // Check if chat notifications are enabled for this room
+        final notificationsEnabled =
+            roomData['notificationsEnabled'] as bool? ?? true;
+        if (notificationsEnabled) {
+          _watchRoomMessages(roomDoc.id, roomData);
+        }
       }
     });
     _subs.add(roomsSub);
@@ -109,11 +117,8 @@ class NotificationListenerService {
       final doc = snapshot.docs.first;
       final data = doc.data();
 
-      // Don't notify for own messages
       final senderId = data['senderId'] as String? ?? '';
       if (senderId == _currentUserId) return;
-
-      // Don't notify for scheduled messages
       if (data['scheduledAt'] != null) return;
 
       final key = 'notif_chat_${doc.id}';
@@ -129,6 +134,8 @@ class NotificationListenerService {
         roomName: roomName,
         senderName: senderName,
         message: text.length > 80 ? '${text.substring(0, 80)}...' : text,
+        roomId: roomId,
+        areaId: _areaId!,
       );
     });
     _subs.add(sub);
@@ -154,10 +161,13 @@ class NotificationListenerService {
 
       final title = data['title'] as String? ?? '';
       final body = data['body'] as String? ?? '';
+      final announcementId = data['announcementId'] as String?;
 
       await _notifService.showRingBellNotification(
         title: title,
         body: body,
+        announcementId: announcementId,
+        areaId: _areaId,
       );
     });
     _subs.add(sub);

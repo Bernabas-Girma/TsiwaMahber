@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,6 +16,9 @@ class LocalNotificationService {
   bool _initialized = false;
   int _nextId = 0;
 
+  /// Global callback for notification taps.
+  static void Function(String payload)? onNotificationTap;
+
   static const String _channelId = 'tsiwa_mahber_default';
   static const String _channelName = 'ጽዋ ማህበር';
   static const String _channelDesc = 'Announcements, chat & reminders';
@@ -28,11 +32,18 @@ class LocalNotificationService {
 
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    const initSettings = InitializationSettings(android: androidSettings);
+    final initSettings = InitializationSettings(android: androidSettings);
 
-    await _plugin.initialize(initSettings);
+    await _plugin.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: (response) {
+        final payload = response.payload;
+        if (payload != null && onNotificationTap != null) {
+          onNotificationTap!(payload);
+        }
+      },
+    );
 
-    // Create notification channels
     final androidPlugin =
         _plugin.resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
@@ -53,7 +64,6 @@ class LocalNotificationService {
           importance: Importance.max,
         ),
       );
-      // Request notification permission (Android 13+)
       await androidPlugin.requestNotificationsPermission();
     }
 
@@ -75,6 +85,7 @@ class LocalNotificationService {
     required String title,
     required String body,
     bool urgent = false,
+    String? payload,
   }) async {
     if (!_initialized) await init();
 
@@ -93,18 +104,26 @@ class LocalNotificationService {
       ),
     );
 
-    await _plugin.show(_getNextId(), title, body, details);
+    await _plugin.show(_getNextId(), title, body, details, payload: payload);
   }
 
   Future<void> showAnnouncementNotification({
     required String title,
     required String body,
+    required String announcementId,
+    required String areaId,
     bool urgent = false,
   }) async {
+    final payload = jsonEncode({
+      'type': 'announcement',
+      'announcementId': announcementId,
+      'areaId': areaId,
+    });
     await showNotification(
-      title: '📢 $title',
+      title: title,
       body: body,
       urgent: urgent,
+      payload: payload,
     );
   }
 
@@ -112,21 +131,41 @@ class LocalNotificationService {
     required String roomName,
     required String senderName,
     required String message,
+    required String roomId,
+    required String areaId,
   }) async {
+    final payload = jsonEncode({
+      'type': 'chat',
+      'roomId': roomId,
+      'roomName': roomName,
+      'areaId': areaId,
+    });
     await showNotification(
       title: roomName,
       body: '$senderName: $message',
+      payload: payload,
     );
   }
 
   Future<void> showRingBellNotification({
     required String title,
     required String body,
+    String? announcementId,
+    String? areaId,
   }) async {
+    String? payload;
+    if (announcementId != null && areaId != null) {
+      payload = jsonEncode({
+        'type': 'announcement',
+        'announcementId': announcementId,
+        'areaId': areaId,
+      });
+    }
     await showNotification(
-      title: '🔔 $title',
+      title: title,
       body: body,
       urgent: true,
+      payload: payload,
     );
   }
 }

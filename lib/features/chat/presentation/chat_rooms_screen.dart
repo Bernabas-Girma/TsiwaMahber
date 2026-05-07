@@ -146,6 +146,12 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 child: Icon(Icons.volume_off,
                     size: 16, color: Colors.orange.shade700),
               ),
+            if (!room.notificationsEnabled)
+              const Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Icon(Icons.notifications_off,
+                    size: 16, color: Colors.grey),
+              ),
           ],
         ),
         subtitle: room.lastMessage.isNotEmpty
@@ -224,6 +230,25 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                       ],
                     ),
                   ),
+                  PopupMenuItem(
+                    value: room.notificationsEnabled
+                        ? 'disable_notif'
+                        : 'enable_notif',
+                    child: Row(
+                      children: [
+                        Icon(
+                          room.notificationsEnabled
+                              ? Icons.notifications_off
+                              : Icons.notifications_active,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(room.notificationsEnabled
+                            ? S.disableNotifications
+                            : S.enableNotifications),
+                      ],
+                    ),
+                  ),
                   if (room.type == ChatRoomType.custom)
                     PopupMenuItem(
                       value: 'delete',
@@ -265,6 +290,22 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
         _chatRepository.unmuteRoom(widget.areaId, room.id);
       case 'delete':
         _showDeleteDialog(room);
+      case 'enable_notif':
+        _chatRepository.toggleNotifications(
+            widget.areaId, room.id, true);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(S.notificationsEnabled)),
+          );
+        }
+      case 'disable_notif':
+        _chatRepository.toggleNotifications(
+            widget.areaId, room.id, false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(S.notificationsDisabled)),
+          );
+        }
     }
   }
 
