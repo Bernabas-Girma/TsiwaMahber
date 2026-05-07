@@ -161,7 +161,7 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 value: room.isEnabled,
                 onChanged: (val) => _chatRepository.toggleRoom(
                     widget.areaId, room.id, val),
-                activeColor: AppTheme.primary,
+                activeTrackColor: AppTheme.primary,
               ),
             if (!isAdmin)
               const Icon(Icons.chevron_right,
