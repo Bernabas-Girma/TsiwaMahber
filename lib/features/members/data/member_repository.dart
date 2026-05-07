@@ -11,11 +11,15 @@ class MemberRepository {
   Stream<List<Member>> watchMembers(String areaId, String tsiwaId) {
     return _firestore
         .collection(FirestorePaths.members(areaId, tsiwaId))
-        .where('deletedAt', isNull: true)
-        .orderBy('orderIndex')
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => Member.fromDoc(doc)).toList());
+        .map((snapshot) {
+      final members = snapshot.docs
+          .where((doc) => doc.data()['deletedAt'] == null)
+          .map((doc) => Member.fromDoc(doc))
+          .toList()
+        ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+      return members;
+    });
   }
 
   Stream<Member?> watchMember(
@@ -69,13 +73,15 @@ class MemberRepository {
   Future<int> getNextOrderIndex(String areaId, String tsiwaId) async {
     final snapshot = await _firestore
         .collection(FirestorePaths.members(areaId, tsiwaId))
-        .where('deletedAt', isNull: true)
-        .orderBy('orderIndex', descending: true)
-        .limit(1)
         .get();
 
-    if (snapshot.docs.isEmpty) return 1;
-    final maxIndex = snapshot.docs.first.data()['orderIndex'] as int? ?? 0;
+    int maxIndex = 0;
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      if (data['deletedAt'] != null) continue;
+      final order = data['orderIndex'] as int? ?? 0;
+      if (order > maxIndex) maxIndex = order;
+    }
     return maxIndex + 1;
   }
 
@@ -111,16 +117,17 @@ class MemberRepository {
     try {
       final snapshot = await _firestore
           .collection(FirestorePaths.members(areaId, tsiwaId))
-          .where('deletedAt', isNull: true)
-          .where('isActive', isEqualTo: true)
           .get();
 
       int memberCount = 0;
       int museCount = 0;
 
       for (final doc in snapshot.docs) {
+        final data = doc.data();
+        if (data['deletedAt'] != null) continue;
+        if (data['isActive'] != true) continue;
         memberCount++;
-        final role = doc.data()['role'] as String?;
+        final role = data['role'] as String?;
         if (role == 'muse' || role == 'assistant_muse') {
           museCount++;
         }

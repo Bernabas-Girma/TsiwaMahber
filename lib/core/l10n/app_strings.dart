@@ -104,9 +104,9 @@ class S {
   static String get manageLeaders => _am ? 'አመራሮችን ያስተዳድሩ' : 'Manage leaders';
   static String get edir => _am ? 'እድር' : 'Edir';
   static String get manageEdir => _am ? 'እድርን ያስተዳድሩ' : 'Manage Edir';
-  static String get announcements => _am ? 'ማስታወቂያዎች' : 'Announcements';
+  static String get announcements => _am ? 'ማሳሰቢያዎች / መልእክቶች' : 'Announcements';
   static String get viewAnnouncements =>
-      _am ? 'ማስታወቂያዎችን ያየ' : 'View announcements';
+      _am ? 'ማሳሰቢያዎች / መልእክቶች ያየ' : 'View announcements';
   static String get telegram => _am ? 'ቴሌግራም' : 'Telegram';
   static String get telegramBot =>
       _am ? 'ቴሌግራም ባት ማገናኛ' : 'Telegram bot connection';
@@ -122,7 +122,7 @@ class S {
   static String get developers => _am ? 'ገንቢዎች' : 'Developers';
   static String get developerManagement =>
       _am ? 'ገንቢ አስተዳደር' : 'Developer management';
-  static String get announcement => _am ? 'ማስታወቂያ' : 'Announcement';
+  static String get announcement => _am ? 'ማሳሰቢያ / መልእክት' : 'Announcement';
 
   // ── User Roles ──
   static String get roleDeveloper => _am ? 'ገንቢ' : 'Developer';
@@ -367,26 +367,26 @@ class S {
   static String get clear => _am ? 'አጽዳ' : 'Clear';
 
   // ── Notification Types ──
-  static String get notifAnnouncement => _am ? 'ማስታወቂያ' : 'Announcement';
+  static String get notifAnnouncement => _am ? 'ማሳሰቢያ / መልእክት' : 'Announcement';
   static String get notifEvent => _am ? 'ክስተት' : 'Event';
   static String get notifPayment => _am ? 'ክፍያ' : 'Payment';
   static String get notifSystem => _am ? 'ስርዓት' : 'System';
 
   // ── Announcements ──
   static String get noAnnouncementsYet =>
-      _am ? 'እስካሁን ማስታወቂያ የለም።' : 'No announcements yet.';
+      _am ? 'እስካሁን ማሳሰቢያ / መልእክት የለም።' : 'No announcements yet.';
   static String get addAnnouncementHint => _am
-      ? 'አዲስ ማስታወቂያ ለመጨመር ከታች ያለውን ቁልፍ ይጫኑ'
+      ? 'አዲስ ማሳሰቢያ / መልእክት ለመጨመር ከታች ያለውን ቁልፍ ይጫኑ'
       : 'Tap the button below to add an announcement';
-  static String get newAnnouncement => _am ? 'አዲስ ማስታወቂያ' : 'New Announcement';
+  static String get newAnnouncement => _am ? 'አዲስ ማሳሰቢያ / መልእክት' : 'New Announcement';
   static String get editAnnouncement =>
-      _am ? 'ማስታወቂያ አስተካክል' : 'Edit Announcement';
+      _am ? 'ማሳሰቢያ / መልእክት አስተካክል' : 'Edit Announcement';
   static String get deleteAnnouncement =>
-      _am ? 'ማስታወቂያ ሰርዝ' : 'Delete Announcement';
+      _am ? 'ማሳሰቢያ / መልእክት ሰርዝ' : 'Delete Announcement';
   static String get announcementDeleted =>
-      _am ? 'ማስታወቂያ ተሰርዟል' : 'Announcement deleted';
+      _am ? 'ማሳሰቢያ / መልእክት ተሰርዟል' : 'Announcement deleted';
   static String get announcementNotFound =>
-      _am ? 'ማስታወቂያ አልተገኘም' : 'Announcement not found';
+      _am ? 'ማሳሰቢያ / መልእክት አልተገኘም' : 'Announcement not found';
   static String get titleRequired => _am ? 'ርዕስ ያስፈልጋል' : 'Title is required';
   static String get detailRequired =>
       _am ? 'ዝርዝር ያስፈልጋል' : 'Detail is required';
@@ -408,7 +408,7 @@ class S {
       _am ? 'ቴሌግራም ማገናኛ' : 'Telegram Connection';
   static String get telegramBotTitle => _am ? 'ቴሌግራም ቦት' : 'Telegram Bot';
   static String get telegramDesc => _am
-      ? 'ማስታወቂያዎችን ወደ ቴሌግራም ግሩፕ ያስተላልፉ'
+      ? 'ማሳሰቢያዎች / መልእክቶችን ወደ ቴሌግራም ግሩፕ ያስተላልፉ'
       : 'Send announcements to Telegram group';
   static String get botSettings => _am ? 'ቦት ማስተካከያ' : 'Bot Settings';
   static String get botCreateHint => _am
@@ -417,7 +417,7 @@ class S {
   static String get testConnection => _am ? 'ግንኙነት ፈትሽ' : 'Test Connection';
   static String get notifTypes => _am ? 'ማሳወቂያ ዓይነቶች' : 'Notification Types';
   static String get sendAnnouncements => _am
-      ? 'አዲስ ማስታወቂያ ሲፈጠር ወደ ቴሌግራም ላክ'
+      ? 'አዲስ ማሳሰቢያ / መልእክት ሲፈጠር ወደ ቴሌግራም ላክ'
       : 'Send new announcements to Telegram';
   static String get events => _am ? 'ክስተቶች' : 'Events';
   static String get sendEvents =>
@@ -714,7 +714,7 @@ class S {
   static String get allMembers => _am ? 'ለሁሉም አባላት' : 'All members';
   static String get specificTsiwa => _am ? 'ለተወሰነ ፅዋ ማህበር' : 'Specific Tsiwa';
   static String get announcementPosted =>
-      _am ? 'ማስታወቂያ ተልኳል' : 'Announcement posted';
+      _am ? 'ማሳሰቢያ / መልእክት ተልኳል' : 'Announcement posted';
 
   // ── Edir visibility ──
   static String get hideEdir => _am ? 'እድር ደብቅ' : 'Hide Edir';

@@ -56,7 +56,7 @@ class _AnnouncementListScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ማስታወቂያዎች'),
+        title: const Text('ማሳሰቢያዎች / መልእክቶች'),
       ),
       body: StreamBuilder<List<Announcement>>(
         stream: _repository.watchAnnouncements(widget.areaId),
@@ -332,7 +332,7 @@ class _AnnouncementListScreenState
 
   Future<void> _resendNotification(Announcement announcement) async {
     final notification = AppNotification(
-      title: 'ማስታወቂያ: ${announcement.title}',
+      title: 'ማሳሰቢያ / መልእክት: ${announcement.title}',
       body: announcement.body.length > 100
           ? '${announcement.body.substring(0, 100)}...'
           : announcement.body,

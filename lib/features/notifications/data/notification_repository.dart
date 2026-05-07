@@ -45,12 +45,14 @@ class NotificationRepository {
     final usersSnapshot = await _firestore
         .collection('users')
         .where('areaId', isEqualTo: areaId)
-        .where('isActive', isEqualTo: true)
         .get();
+
+    final activeUsers = usersSnapshot.docs
+        .where((doc) => doc.data()['isActive'] == true);
 
     final batch = _firestore.batch();
 
-    for (final userDoc in usersSnapshot.docs) {
+    for (final userDoc in activeUsers) {
       final ref = _firestore
           .collection(_userNotificationsPath(userDoc.id))
           .doc();
@@ -67,14 +69,17 @@ class NotificationRepository {
     final usersSnapshot = await _firestore
         .collection('users')
         .where('assignedTsiwaIds', arrayContains: tsiwaId)
-        .where('isActive', isEqualTo: true)
         .get();
 
-    for (int i = 0; i < usersSnapshot.docs.length; i += 500) {
-      final chunk = usersSnapshot.docs.sublist(
+    final activeDocs = usersSnapshot.docs
+        .where((doc) => doc.data()['isActive'] == true)
+        .toList();
+
+    for (int i = 0; i < activeDocs.length; i += 500) {
+      final chunk = activeDocs.sublist(
         i,
-        i + 500 > usersSnapshot.docs.length
-            ? usersSnapshot.docs.length
+        i + 500 > activeDocs.length
+            ? activeDocs.length
             : i + 500,
       );
       final batch = _firestore.batch();
