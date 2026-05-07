@@ -641,7 +641,7 @@ void main() {
 
   group('AppNotification', () {
     test('NotificationType displayName returns Amharic', () {
-      expect(NotificationType.announcement.displayName, 'ማስታወቂያ');
+      expect(NotificationType.announcement.displayName, 'ማሳሰቢያ / መልእክት');
       expect(NotificationType.event.displayName, 'ክስተት');
       expect(NotificationType.payment.displayName, 'ክፍያ');
       expect(NotificationType.system.displayName, 'ስርዓት');
