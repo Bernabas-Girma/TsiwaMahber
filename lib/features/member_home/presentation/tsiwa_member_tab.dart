@@ -1,8 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:tsiwa_mahber/core/l10n/app_strings.dart';
 import 'package:tsiwa_mahber/core/theme/app_theme.dart';
 import 'package:tsiwa_mahber/core/utils/ethiopian_calendar.dart';
-import 'package:tsiwa_mahber/core/widgets/loading_state.dart';
 import 'package:tsiwa_mahber/features/auth/data/auth_repository.dart';
 import 'package:tsiwa_mahber/features/auth/domain/app_user.dart';
 import 'package:tsiwa_mahber/features/tsiwa/data/tsiwa_repository.dart';
@@ -11,6 +12,7 @@ import 'package:tsiwa_mahber/features/announcements/data/announcement_repository
 import 'package:tsiwa_mahber/features/announcements/domain/announcement.dart';
 import 'package:tsiwa_mahber/features/announcements/presentation/announcement_detail_screen.dart';
 import 'package:tsiwa_mahber/core/constants/app_constants.dart';
+import 'package:tsiwa_mahber/core/utils/image_url_helper.dart';
 
 class TsiwaMemberTab extends StatefulWidget {
   final AppUser currentUser;
@@ -25,9 +27,14 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
   final _tsiwaRepository = TsiwaRepository();
   final _authRepository = AuthRepository();
   final _announcementRepository = AnnouncementRepository();
-  final Map<String, Stream<TsiwaMahber?>> _tsiwaStreams = {};
-  final Map<String, Stream<List<AppUser>>> _memberStreams = {};
   late final Stream<List<Announcement>> _announcementStream;
+
+  /// Cached tsiwa data — updated by stream subscriptions
+  final Map<String, TsiwaMahber?> _tsiwaCache = {};
+  final Map<String, List<AppUser>> _memberCache = {};
+  final List<StreamSubscription<dynamic>> _subscriptions = [];
+  bool _initialLoading = true;
+  int _streamsReady = 0;
 
   /// Which tsiwa is currently selected (null = show list)
   String? _selectedTsiwaId;
@@ -42,19 +49,56 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
       AppConstants.defaultAreaId,
     );
     final ethYear = EthiopianCalendar.today().year;
-    for (final id in widget.currentUser.assignedTsiwaIds) {
-      _tsiwaStreams[id] = _tsiwaRepository.watchTsiwa(
-        AppConstants.defaultAreaId,
-        id,
-      );
-      _memberStreams[id] = _authRepository.watchMembersByTsiwa(id);
+    final ids = widget.currentUser.assignedTsiwaIds;
+    final totalStreams = ids.length * 2; // tsiwa + members per id
+
+    for (final id in ids) {
       _selectedYears[id] = ethYear;
+
+      _subscriptions.add(
+        _tsiwaRepository
+            .watchTsiwa(AppConstants.defaultAreaId, id)
+            .listen((tsiwa) {
+          if (!mounted) return;
+          final isFirst = !_tsiwaCache.containsKey(id);
+          setState(() {
+            _tsiwaCache[id] = tsiwa;
+            if (isFirst) _onStreamReady(totalStreams);
+          });
+        }),
+      );
+
+      _subscriptions.add(
+        _authRepository.watchMembersByTsiwa(id).listen((members) {
+          if (!mounted) return;
+          final isFirst = !_memberCache.containsKey(id);
+          setState(() {
+            _memberCache[id] = members;
+            if (isFirst) _onStreamReady(totalStreams);
+          });
+        }),
+      );
     }
 
     // If only one tsiwa, auto-select it
-    if (widget.currentUser.assignedTsiwaIds.length == 1) {
-      _selectedTsiwaId = widget.currentUser.assignedTsiwaIds.first;
+    if (ids.length == 1) {
+      _selectedTsiwaId = ids.first;
     }
+  }
+
+  void _onStreamReady(int total) {
+    _streamsReady++;
+    if (_streamsReady >= total) {
+      _initialLoading = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final sub in _subscriptions) {
+      sub.cancel();
+    }
+    super.dispose();
   }
 
   @override
@@ -68,6 +112,10 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
   // ── Tsiwa list (multi-tsiwa users) ──
 
   Widget _buildTsiwaList() {
+    if (_initialLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final tsiwaIds = widget.currentUser.assignedTsiwaIds;
 
     return SingleChildScrollView(
@@ -75,7 +123,6 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Build cards for each tsiwa, sorted by sortOrder
           ...tsiwaIds.map((id) => _buildTsiwaListCard(id)),
           const SizedBox(height: 24),
           _buildAnnouncementsSection(),
@@ -85,113 +132,95 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
   }
 
   Widget _buildTsiwaListCard(String tsiwaId) {
-    return StreamBuilder<TsiwaMahber?>(
-      stream: _tsiwaStreams[tsiwaId],
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.only(bottom: 8),
-            child: Card(
-              child: SizedBox(
-                height: 80,
-                child: Center(child: CircularProgressIndicator()),
+    final tsiwa = _tsiwaCache[tsiwaId];
+    if (tsiwa == null) return const SizedBox.shrink();
+
+    final role = widget.currentUser.tsiwaRoleFor(tsiwaId);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: () => setState(() => _selectedTsiwaId = tsiwaId),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  image: tsiwa.profileImageUrl.isNotEmpty
+                      ? DecorationImage(
+                          image: NetworkImage(
+                              ImageUrlHelper.toDirectUrl(tsiwa.profileImageUrl)),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: tsiwa.profileImageUrl.isEmpty
+                    ? const Icon(Icons.church,
+                        color: AppTheme.primary, size: 24)
+                    : null,
               ),
-            ),
-          );
-        }
-
-        final tsiwa = snapshot.data;
-        if (tsiwa == null) return const SizedBox.shrink();
-
-        final role = widget.currentUser.tsiwaRoleFor(tsiwaId);
-
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: InkWell(
-            onTap: () => setState(() => _selectedTsiwaId = tsiwaId),
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  // Tsiwa icon / image placeholder
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppTheme.primary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                      image: tsiwa.profileImageUrl.isNotEmpty
-                          ? DecorationImage(
-                              image: NetworkImage(tsiwa.profileImageUrl),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: tsiwa.profileImageUrl.isEmpty
-                        ? const Icon(Icons.church,
-                            color: AppTheme.primary, size: 24)
-                        : null,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          tsiwa.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (tsiwa.churchName.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            tsiwa.churchName,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textMuted,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 4),
-                        Text(
-                          S.tapToViewDetails,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: AppTheme.primary.withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Role badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _roleDisplay(role),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tsiwa.name,
                       style: const TextStyle(
-                        fontSize: 11,
-                        color: AppTheme.primary,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.chevron_right,
-                      color: AppTheme.textMuted, size: 20),
-                ],
+                    if (tsiwa.churchName.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        tsiwa.churchName,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textMuted,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 4),
+                    Text(
+                      S.tapToViewDetails,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppTheme.primary.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _roleDisplay(role),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(Icons.chevron_right,
+                  color: AppTheme.textMuted, size: 20),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -201,51 +230,41 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
     final hasMultipleTsiwas =
         widget.currentUser.assignedTsiwaIds.length > 1;
 
-    return StreamBuilder<TsiwaMahber?>(
-      stream: _tsiwaStreams[tsiwaId],
-      builder: (context, tsiwaSnap) {
-        if (tsiwaSnap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    final tsiwa = _tsiwaCache[tsiwaId];
+    if (tsiwa == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-        final tsiwa = tsiwaSnap.data;
-        if (tsiwa == null) return const SizedBox.shrink();
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Back button for multi-tsiwa users
-              if (hasMultipleTsiwas)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: TextButton.icon(
-                    onPressed: () =>
-                        setState(() => _selectedTsiwaId = null),
-                    icon: const Icon(Icons.arrow_back, size: 18),
-                    label: Text(S.backToList),
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (hasMultipleTsiwas)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: TextButton.icon(
+                onPressed: () =>
+                    setState(() => _selectedTsiwaId = null),
+                icon: const Icon(Icons.arrow_back, size: 18),
+                label: Text(S.backToList),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
+              ),
+            ),
 
-              // Tsiwa header card
-              _buildTsiwaHeader(tsiwa, tsiwaId),
-              const SizedBox(height: 12),
+          _buildTsiwaHeader(tsiwa, tsiwaId),
+          const SizedBox(height: 12),
 
-              // Rotation calendar with year switcher
-              _buildRotationCalendar(tsiwa, tsiwaId),
-              const SizedBox(height: 24),
+          _buildRotationCalendar(tsiwa, tsiwaId),
+          const SizedBox(height: 24),
 
-              _buildAnnouncementsSection(),
-            ],
-          ),
-        );
-      },
+          _buildAnnouncementsSection(),
+        ],
+      ),
     );
   }
 
@@ -263,7 +282,8 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
                 borderRadius: BorderRadius.circular(10),
                 image: tsiwa.profileImageUrl.isNotEmpty
                     ? DecorationImage(
-                        image: NetworkImage(tsiwa.profileImageUrl),
+                        image: NetworkImage(
+                            ImageUrlHelper.toDirectUrl(tsiwa.profileImageUrl)),
                         fit: BoxFit.cover,
                       )
                     : null,
@@ -332,14 +352,7 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
   }
 
   Widget _buildRotationCalendar(TsiwaMahber tsiwa, String tsiwaId) {
-    return StreamBuilder<List<AppUser>>(
-      stream: _memberStreams[tsiwaId],
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        final members = snapshot.data ?? [];
+        final members = _memberCache[tsiwaId] ?? [];
         if (members.isEmpty) {
           return Card(
             child: Padding(
@@ -518,8 +531,6 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
             ),
           ),
         );
-      },
-    );
   }
 
   Widget _buildMyOrderCard(int myMonth, EthiopianDate today, int tsiwaDay) {
@@ -824,8 +835,9 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
         StreamBuilder<List<Announcement>>(
           stream: _announcementStream,
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return LoadingState(message: S.loading);
+            if (!snapshot.hasData &&
+                snapshot.connectionState == ConnectionState.waiting) {
+              return const SizedBox.shrink();
             }
 
             final announcements = snapshot.data ?? [];

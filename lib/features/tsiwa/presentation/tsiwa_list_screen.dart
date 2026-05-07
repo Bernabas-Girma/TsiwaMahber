@@ -8,6 +8,7 @@ import 'package:tsiwa_mahber/features/tsiwa/domain/tsiwa_mahber.dart';
 import 'package:tsiwa_mahber/features/tsiwa/presentation/tsiwa_detail_screen.dart';
 import 'package:tsiwa_mahber/features/tsiwa/presentation/tsiwa_form_screen.dart';
 import 'package:tsiwa_mahber/core/l10n/app_strings.dart';
+import 'package:tsiwa_mahber/core/utils/image_url_helper.dart';
 
 class TsiwaListScreen extends StatefulWidget {
   final String areaId;
@@ -190,7 +191,7 @@ class _TsiwaCard extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: Image.network(
-                      tsiwa.profileImageUrl,
+                      ImageUrlHelper.toDirectUrl(tsiwa.profileImageUrl),
                       width: 48,
                       height: 48,
                       fit: BoxFit.cover,

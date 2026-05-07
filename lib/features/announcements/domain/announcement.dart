@@ -65,6 +65,7 @@ class Announcement {
   final int readCount;
   final bool isActive;
   final DateTime? expiresAt;
+  final DateTime? scheduledAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -81,6 +82,7 @@ class Announcement {
     this.readCount = 0,
     this.isActive = true,
     this.expiresAt,
+    this.scheduledAt,
     this.createdAt,
     this.updatedAt,
   });
@@ -103,6 +105,7 @@ class Announcement {
       readCount: data['readCount'] as int? ?? 0,
       isActive: data['isActive'] as bool? ?? true,
       expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
+      scheduledAt: (data['scheduledAt'] as Timestamp?)?.toDate(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );
@@ -122,6 +125,8 @@ class Announcement {
       'isActive': true,
       if (expiresAt != null)
         'expiresAt': Timestamp.fromDate(expiresAt!),
+      if (scheduledAt != null)
+        'scheduledAt': Timestamp.fromDate(scheduledAt!),
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -152,6 +157,7 @@ class Announcement {
     int? readCount,
     bool? isActive,
     DateTime? expiresAt,
+    DateTime? scheduledAt,
   }) {
     return Announcement(
       id: id ?? this.id,
@@ -166,6 +172,7 @@ class Announcement {
       readCount: readCount ?? this.readCount,
       isActive: isActive ?? this.isActive,
       expiresAt: expiresAt ?? this.expiresAt,
+      scheduledAt: scheduledAt ?? this.scheduledAt,
     );
   }
 }

@@ -13,6 +13,7 @@ import 'package:tsiwa_mahber/features/tsiwa/presentation/tsiwa_form_screen.dart'
 import 'package:tsiwa_mahber/features/notifications/data/notification_repository.dart';
 import 'package:tsiwa_mahber/features/notifications/domain/app_notification.dart';
 import 'package:tsiwa_mahber/core/l10n/app_strings.dart';
+import 'package:tsiwa_mahber/core/utils/image_url_helper.dart';
 
 class TsiwaDetailScreen extends StatefulWidget {
   final String areaId;
@@ -119,7 +120,7 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.network(
-                  tsiwa.profileImageUrl,
+                  ImageUrlHelper.toDirectUrl(tsiwa.profileImageUrl),
                   width: 80,
                   height: 80,
                   fit: BoxFit.cover,
