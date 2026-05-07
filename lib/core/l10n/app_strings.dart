@@ -748,4 +748,21 @@ class S {
       _am
           ? 'የ$month ወር ተራ $name ነው'
           : "$name's turn for $month";
+
+  // ── Chat ──
+  static String get chatGroups => _am ? 'የቡድን ውይይት' : 'Group Chat';
+  static String get chatGroupsSub =>
+      _am ? 'ከአባላት ጋር ይወያዩ' : 'Chat with members';
+  static String get globalChat => _am ? 'ዓለም አቀፍ ቡድን' : 'Global Group';
+  static String get amerarsChat => _am ? 'የአመራሮች ቡድን' : 'Amerars Only';
+  static String get tsiwaChat => _am ? 'የጽዋ ቡድን' : 'Tsiwa Group';
+  static String get typeMessage => _am ? 'መልእክት ይጻፉ...' : 'Type a message...';
+  static String get noChatMessages =>
+      _am ? 'እስካሁን መልእክት የለም' : 'No messages yet';
+  static String get noChatRooms =>
+      _am ? 'ቡድን የለም' : 'No chat rooms available';
+  static String get deleteMessage => _am ? 'መልእክት ሰርዝ' : 'Delete Message';
+  static String get deleteMessageConfirm =>
+      _am ? 'ይህንን መልእክት መሰረዝ ይፈልጋሉ?' : 'Delete this message?';
+  static String get disabled => _am ? 'ተዘግቷል' : 'Disabled';
 }

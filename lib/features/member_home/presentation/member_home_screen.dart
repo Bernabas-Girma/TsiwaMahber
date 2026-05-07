@@ -7,6 +7,8 @@ import 'package:tsiwa_mahber/features/auth/presentation/profile_screen.dart';
 import 'package:tsiwa_mahber/features/member_home/presentation/tsiwa_member_tab.dart';
 import 'package:tsiwa_mahber/features/member_home/presentation/edir_member_tab.dart';
 import 'package:tsiwa_mahber/features/announcements/presentation/announcement_list_screen.dart';
+import 'package:tsiwa_mahber/features/chat/presentation/chat_rooms_screen.dart';
+import 'package:tsiwa_mahber/core/constants/app_constants.dart';
 
 class MemberHomeScreen extends StatefulWidget {
   final AppUser currentUser;
@@ -66,6 +68,16 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
       ));
     }
 
+    // Chat tab
+    navItems.add(BottomNavigationBarItem(
+      icon: const Icon(Icons.chat),
+      label: S.chatGroups,
+    ));
+    pages.add(ChatRoomsScreen(
+      areaId: AppConstants.defaultAreaId,
+      currentUser: user,
+    ));
+
     // Clamp index
     if (_selectedIndex >= pages.length) {
       _selectedIndex = 0;
@@ -106,6 +118,7 @@ class _MemberHomeScreenState extends State<MemberHomeScreen> {
               currentIndex: _selectedIndex,
               onTap: (i) => setState(() => _selectedIndex = i),
               selectedItemColor: AppTheme.primary,
+              type: BottomNavigationBarType.fixed,
               items: navItems,
             )
           : null,

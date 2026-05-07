@@ -30,6 +30,7 @@ import 'package:tsiwa_mahber/features/developer/presentation/developer_managemen
 import 'package:tsiwa_mahber/features/global_members/presentation/global_member_list_screen.dart';
 import 'package:tsiwa_mahber/core/l10n/app_strings.dart';
 import 'package:tsiwa_mahber/core/constants/app_constants.dart';
+import 'package:tsiwa_mahber/features/chat/presentation/chat_rooms_screen.dart';
 
 class AreaHomeScreen extends StatefulWidget {
   final AppUser? currentUser;
@@ -360,6 +361,24 @@ class _AreaHomeScreenState extends State<AreaHomeScreen> {
             );
           },
         ),
+        if (widget.currentUser != null)
+          AppInfoCard(
+            icon: Icons.chat,
+            title: S.chatGroups,
+            subtitle: S.chatGroupsSub,
+            iconColor: Colors.teal,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChatRoomsScreen(
+                    areaId: widget.areaId,
+                    currentUser: widget.currentUser!,
+                  ),
+                ),
+              );
+            },
+          ),
         if (role?.isAdminOrAbove == true)
           AppInfoCard(
             icon: Icons.telegram,
