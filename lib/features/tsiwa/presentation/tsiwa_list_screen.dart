@@ -184,6 +184,29 @@ class _TsiwaCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
               ],
+              if (tsiwa.profileImageUrl.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.network(
+                      tsiwa.profileImageUrl,
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.church,
+                            color: AppTheme.primary, size: 24),
+                      ),
+                    ),
+                  ),
+                ),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

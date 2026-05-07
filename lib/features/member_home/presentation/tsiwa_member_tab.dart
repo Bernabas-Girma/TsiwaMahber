@@ -29,23 +29,45 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
   final Map<String, Stream<List<AppUser>>> _memberStreams = {};
   late final Stream<List<Announcement>> _announcementStream;
 
+  /// Which tsiwa is currently selected (null = show list)
+  String? _selectedTsiwaId;
+
+  /// Year selector per tsiwa
+  final Map<String, int> _selectedYears = {};
+
   @override
   void initState() {
     super.initState();
     _announcementStream = _announcementRepository.watchAnnouncements(
       AppConstants.defaultAreaId,
     );
+    final ethYear = EthiopianCalendar.today().year;
     for (final id in widget.currentUser.assignedTsiwaIds) {
       _tsiwaStreams[id] = _tsiwaRepository.watchTsiwa(
         AppConstants.defaultAreaId,
         id,
       );
       _memberStreams[id] = _authRepository.watchMembersByTsiwa(id);
+      _selectedYears[id] = ethYear;
+    }
+
+    // If only one tsiwa, auto-select it
+    if (widget.currentUser.assignedTsiwaIds.length == 1) {
+      _selectedTsiwaId = widget.currentUser.assignedTsiwaIds.first;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_selectedTsiwaId != null) {
+      return _buildTsiwaDetail(_selectedTsiwaId!);
+    }
+    return _buildTsiwaList();
+  }
+
+  // ── Tsiwa list (multi-tsiwa users) ──
+
+  Widget _buildTsiwaList() {
     final tsiwaIds = widget.currentUser.assignedTsiwaIds;
 
     return SingleChildScrollView(
@@ -53,7 +75,8 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ...tsiwaIds.map((tsiwaId) => _buildTsiwaSection(tsiwaId)),
+          // Build cards for each tsiwa, sorted by sortOrder
+          ...tsiwaIds.map((id) => _buildTsiwaListCard(id)),
           const SizedBox(height: 24),
           _buildAnnouncementsSection(),
         ],
@@ -61,99 +84,239 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
     );
   }
 
-  Widget _buildTsiwaSection(String tsiwaId) {
+  Widget _buildTsiwaListCard(String tsiwaId) {
+    return StreamBuilder<TsiwaMahber?>(
+      stream: _tsiwaStreams[tsiwaId],
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: Card(
+              child: SizedBox(
+                height: 80,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ),
+          );
+        }
+
+        final tsiwa = snapshot.data;
+        if (tsiwa == null) return const SizedBox.shrink();
+
+        final role = widget.currentUser.tsiwaRoleFor(tsiwaId);
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: InkWell(
+            onTap: () => setState(() => _selectedTsiwaId = tsiwaId),
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Tsiwa icon / image placeholder
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      image: tsiwa.profileImageUrl.isNotEmpty
+                          ? DecorationImage(
+                              image: NetworkImage(tsiwa.profileImageUrl),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
+                    child: tsiwa.profileImageUrl.isEmpty
+                        ? const Icon(Icons.church,
+                            color: AppTheme.primary, size: 24)
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tsiwa.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (tsiwa.churchName.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            tsiwa.churchName,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textMuted,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 4),
+                        Text(
+                          S.tapToViewDetails,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.primary.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Role badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _roleDisplay(role),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppTheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.chevron_right,
+                      color: AppTheme.textMuted, size: 20),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ── Tsiwa detail view ──
+
+  Widget _buildTsiwaDetail(String tsiwaId) {
+    final hasMultipleTsiwas =
+        widget.currentUser.assignedTsiwaIds.length > 1;
+
     return StreamBuilder<TsiwaMahber?>(
       stream: _tsiwaStreams[tsiwaId],
       builder: (context, tsiwaSnap) {
         if (tsiwaSnap.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.all(16),
-            child: Center(child: CircularProgressIndicator()),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
 
         final tsiwa = tsiwaSnap.data;
         if (tsiwa == null) return const SizedBox.shrink();
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Back button for multi-tsiwa users
+              if (hasMultipleTsiwas)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: TextButton.icon(
+                    onPressed: () =>
+                        setState(() => _selectedTsiwaId = null),
+                    icon: const Icon(Icons.arrow_back, size: 18),
+                    label: Text(S.backToList),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ),
+
+              // Tsiwa header card
+              _buildTsiwaHeader(tsiwa, tsiwaId),
+              const SizedBox(height: 12),
+
+              // Rotation calendar with year switcher
+              _buildRotationCalendar(tsiwa, tsiwaId),
+              const SizedBox(height: 24),
+
+              _buildAnnouncementsSection(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTsiwaHeader(TsiwaMahber tsiwa, String tsiwaId) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
           children: [
-            // Tsiwa name header
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primary.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.church,
-                        color: AppTheme.primary,
-                        size: 24,
-                      ),
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+                image: tsiwa.profileImageUrl.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(tsiwa.profileImageUrl),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: tsiwa.profileImageUrl.isEmpty
+                  ? const Icon(Icons.church,
+                      color: AppTheme.primary, size: 24)
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tsiwa.name,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            tsiwa.name,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          if (tsiwa.churchName.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              tsiwa.churchName,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: AppTheme.textMuted,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    // Role badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primary.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        _roleDisplay(widget.currentUser.tsiwaRoleFor(tsiwaId)),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppTheme.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
+                  ),
+                  if (tsiwa.churchName.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      tsiwa.churchName,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textMuted,
                       ),
                     ),
                   ],
+                ],
+              ),
+            ),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                _roleDisplay(widget.currentUser.tsiwaRoleFor(tsiwaId)),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppTheme.primary,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-
-            const SizedBox(height: 12),
-
-            // ተረኛ Calendar
-            _buildRotationCalendar(tsiwa, tsiwaId),
-
-            const SizedBox(height: 16),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -191,7 +354,8 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
 
         final ethToday = EthiopianCalendar.today();
         final tsiwaDay = tsiwa.monthlyTsiwaDay;
-        final order = _orderForYear(tsiwa, ethToday.year);
+        final selectedYear = _selectedYears[tsiwaId] ?? ethToday.year;
+        final order = _orderForYear(tsiwa, selectedYear);
 
         // Build member lookup map
         final memberMap = <String, AppUser>{};
@@ -199,7 +363,7 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
           memberMap[m.uid] = m;
         }
 
-        // Find this user's order month in current year
+        // Find this user's order month in selected year
         int? myMonth;
         for (final entry in order.entries) {
           if (entry.value == widget.currentUser.uid) {
@@ -214,7 +378,7 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
+                // Header with year switcher
                 Row(
                   children: [
                     const Icon(
@@ -232,13 +396,35 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
                         ),
                       ),
                     ),
-                    Text(
-                      S.yearLabel(ethToday.year),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.primary,
-                        fontWeight: FontWeight.w600,
+                    // Year switcher
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left, size: 20),
+                      onPressed: () => setState(() {
+                        _selectedYears[tsiwaId] = selectedYear - 1;
+                      }),
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        S.yearLabel(selectedYear),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right, size: 20),
+                      onPressed: () => setState(() {
+                        _selectedYears[tsiwaId] = selectedYear + 1;
+                      }),
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
@@ -253,18 +439,21 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
                 const Divider(height: 24),
 
                 // My next order month + countdown
-                if (myMonth != null) ...[
+                if (myMonth != null &&
+                    selectedYear == ethToday.year) ...[
                   _buildMyOrderCard(myMonth, ethToday, tsiwaDay),
                   const SizedBox(height: 12),
                 ],
 
-                // Current month order
-                _buildCurrentMonthCard(
-                  ethToday.month,
-                  order,
-                  memberMap,
-                ),
-                const SizedBox(height: 12),
+                // Current month order (only for current year)
+                if (selectedYear == ethToday.year) ...[
+                  _buildCurrentMonthCard(
+                    ethToday.month,
+                    order,
+                    memberMap,
+                  ),
+                  const SizedBox(height: 12),
+                ],
 
                 // Yearly Zikir dates
                 if (tsiwa.yearlyZikir.isNotEmpty) ...[
@@ -296,33 +485,35 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
                   const SizedBox(height: 8),
                 ],
 
-                // Next 6 months
-                Text(
-                  S.upcomingOrders,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textMuted,
+                // Upcoming orders (next 6 months for current year)
+                if (selectedYear == ethToday.year) ...[
+                  Text(
+                    S.upcomingOrders,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textMuted,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                ...List.generate(6, (i) {
-                  int month = ethToday.month + i + 1;
-                  if (month > AppConstants.tsiwaMonthCount) {
-                    month -= AppConstants.tsiwaMonthCount;
-                  }
-                  return _buildMonthOrderEntry(
-                    month,
-                    order,
-                    memberMap,
-                    isMyMonth: month == myMonth,
-                  );
-                }),
-
-                const SizedBox(height: 12),
+                  const SizedBox(height: 8),
+                  ...List.generate(6, (i) {
+                    int month = ethToday.month + i + 1;
+                    if (month > AppConstants.tsiwaMonthCount) {
+                      month -= AppConstants.tsiwaMonthCount;
+                    }
+                    return _buildMonthOrderEntry(
+                      month,
+                      order,
+                      memberMap,
+                      isMyMonth: month == myMonth,
+                    );
+                  }),
+                  const SizedBox(height: 12),
+                ],
 
                 // Full 12-month table (expandable)
-                _buildFullOrderTable(order, memberMap, ethToday, myMonth),
+                _buildFullOrderTable(order, memberMap, ethToday, myMonth,
+                    selectedYear == ethToday.year),
               ],
             ),
           ),
@@ -519,6 +710,7 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
     Map<String, AppUser> memberMap,
     EthiopianDate today,
     int? myMonth,
+    bool isCurrentYear,
   ) {
     return ExpansionTile(
       tilePadding: EdgeInsets.zero,
@@ -532,7 +724,8 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
       leading: const Icon(Icons.table_chart, size: 20),
       children: [
         for (int m = 1; m <= AppConstants.tsiwaMonthCount; m++)
-          _buildFullTableRow(m, order, memberMap, today, myMonth),
+          _buildFullTableRow(m, order, memberMap, today, myMonth,
+              isCurrentYear),
       ],
     );
   }
@@ -543,11 +736,12 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
     Map<String, AppUser> memberMap,
     EthiopianDate today,
     int? myMonth,
+    bool isCurrentYear,
   ) {
     final memberId = order[month];
     final member = memberId != null ? memberMap[memberId] : null;
     final monthName = AppConstants.ethiopianMonthName(month);
-    final isCurrent = today.month == month;
+    final isCurrent = isCurrentYear && today.month == month;
     final isMyMonth = month == myMonth;
 
     return Container(
@@ -572,8 +766,9 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
               monthName,
               style: TextStyle(
                 fontSize: 13,
-                fontWeight:
-                    (isCurrent || isMyMonth) ? FontWeight.bold : FontWeight.normal,
+                fontWeight: (isCurrent || isMyMonth)
+                    ? FontWeight.bold
+                    : FontWeight.normal,
               ),
             ),
           ),
@@ -589,7 +784,8 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
           ),
           if (isCurrent)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: AppTheme.primary.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(6),
