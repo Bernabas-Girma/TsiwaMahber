@@ -765,4 +765,49 @@ class S {
   static String get deleteMessageConfirm =>
       _am ? 'ይህንን መልእክት መሰረዝ ይፈልጋሉ?' : 'Delete this message?';
   static String get disabled => _am ? 'ተዘግቷል' : 'Disabled';
+
+  // ── Chat enhancements ──
+  static String get customGroup => _am ? 'ብጁ ቡድን' : 'Custom Group';
+  static String get createGroup => _am ? 'አዲስ ቡድን ፍጠር' : 'Create Group';
+  static String get groupName => _am ? 'የቡድን ስም' : 'Group Name';
+  static String get groupNameRequired =>
+      _am ? 'የቡድን ስም ያስፈልጋል' : 'Group name is required';
+  static String get selectedMembers => _am ? 'የተመረጡ አባላት' : 'Selected members';
+  static String get chatMembers => _am ? 'የቡድን አባላት' : 'Chat Members';
+  static String get noMembers => _am ? 'አባላት የሉም' : 'No members';
+  static String get rename => _am ? 'ስም ቀይር' : 'Rename';
+  static String get disableGroup => _am ? 'ቡድኑን ዝጋ' : 'Disable Group';
+  static String get enableGroup => _am ? 'ቡድኑን ክፈት' : 'Enable Group';
+  static String get muteGroup => _am ? 'ቡድኑን ዝም አሰኝ' : 'Mute Group';
+  static String get unmuteGroup => _am ? 'ድምጽ ክፈት' : 'Unmute Group';
+  static String get deleteGroupConfirm =>
+      _am ? 'ይህንን ቡድን መሰረዝ ይፈልጋሉ?' : 'Delete this group?';
+  static String get mute24h => _am ? 'ለ24 ሰዓት' : 'For 24 hours';
+  static String get mute1week => _am ? 'ለ1 ሳምንት' : 'For 1 week';
+  static String get muteUntilEnabled =>
+      _am ? 'እስከሚከፈት ድረስ' : 'Until manually re-enabled';
+  static String get groupMuted =>
+      _am ? 'ይህ ቡድን ጸጥ ተደርጓል' : 'This group is muted';
+  static String get youAreRestricted =>
+      _am ? 'መልእክት መላክ ተከልክለዋል' : 'You are restricted from sending';
+  static String get editMessage => _am ? 'መልእክት አስተካክል' : 'Edit Message';
+  static String get editingMessage => _am ? 'በማስተካከል ላይ...' : 'Editing...';
+  static String get edited => _am ? 'ተስተካክሏል' : 'edited';
+  static String get scheduleMessage =>
+      _am ? 'መልእክት ቀጠሮ' : 'Schedule Message';
+  static String get schedule => _am ? 'ቀጠሮ' : 'Schedule';
+  static String get restricted => _am ? 'ተከልክሏል' : 'Restricted';
+  static String get restrictSending =>
+      _am ? 'መላክ ከልክል' : 'Restrict Sending';
+  static String get allowSending => _am ? 'መላክ ፍቀድ' : 'Allow Sending';
+  static String get removeMember => _am ? 'አባል አስወግድ' : 'Remove Member';
+
+  // ── Scheduled announcements ──
+  static String get scheduleAnnouncement =>
+      _am ? 'ማሳሰቢያ ቀጠሮ' : 'Schedule Announcement';
+  static String get noSchedule =>
+      _am ? 'ቀጠሮ የለም (አሁን ይለጠፍ)' : 'No schedule (post now)';
+
+  // ── Premium themes ──
+  static String get chooseTheme => _am ? 'ገጽታ ይምረጡ' : 'Choose Theme';
 }

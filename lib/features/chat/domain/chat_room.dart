@@ -9,7 +9,10 @@ enum ChatRoomType {
   tsiwa,
 
   /// Amerars-only (admin/leader) chat.
-  amerars;
+  amerars,
+
+  /// Custom group created by dev/admin.
+  custom;
 
   String get firestoreValue {
     switch (this) {
@@ -19,6 +22,8 @@ enum ChatRoomType {
         return 'tsiwa';
       case ChatRoomType.amerars:
         return 'amerars';
+      case ChatRoomType.custom:
+        return 'custom';
     }
   }
 
@@ -30,6 +35,8 @@ enum ChatRoomType {
         return ChatRoomType.tsiwa;
       case 'amerars':
         return ChatRoomType.amerars;
+      case 'custom':
+        return ChatRoomType.custom;
       default:
         return ChatRoomType.global;
     }
@@ -50,6 +57,15 @@ class ChatRoom {
   final DateTime? lastMessageAt;
   final DateTime? createdAt;
 
+  /// Member UIDs allowed in custom groups. Empty = open to all (for non-custom).
+  final List<String> memberIds;
+
+  /// UIDs restricted from sending messages in this room.
+  final List<String> restrictedMemberIds;
+
+  /// If non-null, all non-admin members are muted until this time.
+  final DateTime? mutedUntil;
+
   const ChatRoom({
     this.id = '',
     this.areaId = '',
@@ -60,6 +76,9 @@ class ChatRoom {
     this.lastMessage = '',
     this.lastMessageAt,
     this.createdAt,
+    this.memberIds = const [],
+    this.restrictedMemberIds = const [],
+    this.mutedUntil,
   });
 
   factory ChatRoom.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -74,6 +93,11 @@ class ChatRoom {
       lastMessage: data['lastMessage'] as String? ?? '',
       lastMessageAt: (data['lastMessageAt'] as Timestamp?)?.toDate(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
+      memberIds:
+          List<String>.from(data['memberIds'] as List<dynamic>? ?? []),
+      restrictedMemberIds: List<String>.from(
+          data['restrictedMemberIds'] as List<dynamic>? ?? []),
+      mutedUntil: (data['mutedUntil'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -89,6 +113,15 @@ class ChatRoom {
           ? Timestamp.fromDate(lastMessageAt!)
           : null,
       'createdAt': FieldValue.serverTimestamp(),
+      'memberIds': memberIds,
+      'restrictedMemberIds': restrictedMemberIds,
+      if (mutedUntil != null)
+        'mutedUntil': Timestamp.fromDate(mutedUntil!),
     };
+  }
+
+  bool get isMuted {
+    if (mutedUntil == null) return false;
+    return DateTime.now().isBefore(mutedUntil!);
   }
 }

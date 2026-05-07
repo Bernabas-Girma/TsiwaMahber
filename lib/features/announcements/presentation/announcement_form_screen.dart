@@ -9,6 +9,7 @@ import 'package:tsiwa_mahber/features/notifications/domain/app_notification.dart
 import 'package:tsiwa_mahber/features/tsiwa/data/tsiwa_repository.dart';
 import 'package:tsiwa_mahber/features/tsiwa/domain/tsiwa_mahber.dart';
 import 'package:tsiwa_mahber/core/l10n/app_strings.dart';
+import 'package:tsiwa_mahber/core/theme/app_theme.dart';
 
 class AnnouncementFormScreen extends StatefulWidget {
   final String areaId;
@@ -43,8 +44,13 @@ class _AnnouncementFormScreenState
   String _selectedTsiwaName = '';
   bool _isSaving = false;
   List<TsiwaMahber> _tsiwas = [];
+  DateTime? _scheduledAt;
 
   bool get _isEditing => widget.announcement != null;
+
+  bool get _isDev {
+    return widget.currentUser?.role == UserRole.developer;
+  }
 
   bool get _isAmerar {
     final role = widget.currentUser?.role;
@@ -170,6 +176,10 @@ class _AnnouncementFormScreenState
               const SizedBox(height: 16),
               _buildTargetSelector(),
             ],
+            if (_isDev) ...[
+              const SizedBox(height: 16),
+              _buildSchedulePicker(),
+            ],
             const SizedBox(height: 24),
             FilledButton(
               onPressed: _isSaving ? null : _save,
@@ -258,6 +268,78 @@ class _AnnouncementFormScreenState
     );
   }
 
+  Widget _buildSchedulePicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.schedule, size: 18),
+            const SizedBox(width: 8),
+            Text(S.scheduleAnnouncement,
+                style: const TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w500)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            _scheduledAt != null
+                ? '${_scheduledAt!.day}/${_scheduledAt!.month}/${_scheduledAt!.year} '
+                    '${_scheduledAt!.hour}:${_scheduledAt!.minute.toString().padLeft(2, '0')}'
+                : S.noSchedule,
+            style: TextStyle(
+              color: _scheduledAt != null
+                  ? AppTheme.primary
+                  : AppTheme.textMuted,
+            ),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.calendar_today, size: 20),
+                onPressed: _pickSchedule,
+              ),
+              if (_scheduledAt != null)
+                IconButton(
+                  icon: const Icon(Icons.clear, size: 20),
+                  onPressed: () =>
+                      setState(() => _scheduledAt = null),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _pickSchedule() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _scheduledAt ?? DateTime.now().add(const Duration(hours: 1)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(
+          _scheduledAt ?? DateTime.now().add(const Duration(hours: 1))),
+    );
+    if (time == null) return;
+    setState(() {
+      _scheduledAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+    });
+  }
+
   List<TsiwaMahber> _availableTsiwas() {
     if (_isAmerar) return _tsiwas;
     final museIds = _museTsiwaIds;
@@ -284,7 +366,10 @@ class _AnnouncementFormScreenState
         targetName: _targetType == AnnouncementTarget.tsiwa
             ? _selectedTsiwaName
             : '',
-        isActive: widget.announcement?.isActive ?? true,
+        isActive: _scheduledAt == null
+            ? (widget.announcement?.isActive ?? true)
+            : false,
+        scheduledAt: _scheduledAt,
       );
 
       if (_isEditing) {

@@ -6,6 +6,11 @@ class ChatMessage {
   final String senderId;
   final String senderName;
   final String text;
+  final bool isEdited;
+
+  /// If non-null, message is scheduled to appear at this time (dev only).
+  final DateTime? scheduledAt;
+
   final DateTime? createdAt;
 
   const ChatMessage({
@@ -14,6 +19,8 @@ class ChatMessage {
     this.senderId = '',
     this.senderName = '',
     this.text = '',
+    this.isEdited = false,
+    this.scheduledAt,
     this.createdAt,
   });
 
@@ -25,6 +32,8 @@ class ChatMessage {
       senderId: data['senderId'] as String? ?? '',
       senderName: data['senderName'] as String? ?? '',
       text: data['text'] as String? ?? '',
+      isEdited: data['isEdited'] as bool? ?? false,
+      scheduledAt: (data['scheduledAt'] as Timestamp?)?.toDate(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
     );
   }
@@ -35,6 +44,9 @@ class ChatMessage {
       'senderId': senderId,
       'senderName': senderName,
       'text': text,
+      'isEdited': isEdited,
+      if (scheduledAt != null)
+        'scheduledAt': Timestamp.fromDate(scheduledAt!),
       'createdAt': FieldValue.serverTimestamp(),
     };
   }

@@ -5,6 +5,7 @@ import 'package:tsiwa_mahber/features/auth/domain/app_user.dart';
 import 'package:tsiwa_mahber/features/chat/data/chat_repository.dart';
 import 'package:tsiwa_mahber/features/chat/domain/chat_room.dart';
 import 'package:tsiwa_mahber/features/chat/presentation/chat_screen.dart';
+import 'package:tsiwa_mahber/features/chat/presentation/create_chat_group_screen.dart';
 import 'package:tsiwa_mahber/features/tsiwa/data/tsiwa_repository.dart';
 
 class ChatRoomsScreen extends StatefulWidget {
@@ -82,6 +83,12 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 );
               },
             ),
+      floatingActionButton: isAdmin
+          ? FloatingActionButton(
+              onPressed: _createGroup,
+              child: const Icon(Icons.group_add),
+            )
+          : null,
     );
   }
 
@@ -101,6 +108,9 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
         case ChatRoomType.tsiwa:
           return isAdmin ||
               user.assignedTsiwaIds.contains(room.tsiwaId);
+        case ChatRoomType.custom:
+          return isAdmin ||
+              room.memberIds.contains(user.uid);
       }
     }).toList();
   }
@@ -122,9 +132,21 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
             size: 22,
           ),
         ),
-        title: Text(
-          room.name,
-          style: const TextStyle(fontWeight: FontWeight.w600),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                room.name,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+            if (room.isMuted)
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Icon(Icons.volume_off,
+                    size: 16, color: Colors.orange.shade700),
+              ),
+          ],
         ),
         subtitle: room.lastMessage.isNotEmpty
             ? Text(
@@ -157,11 +179,65 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 ),
               ),
             if (isAdmin)
-              Switch(
-                value: room.isEnabled,
-                onChanged: (val) => _chatRepository.toggleRoom(
-                    widget.areaId, room.id, val),
-                activeTrackColor: AppTheme.primary,
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, size: 20),
+                onSelected: (val) =>
+                    _handleRoomAction(val, room),
+                itemBuilder: (ctx) => [
+                  PopupMenuItem(
+                    value: 'rename',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.edit, size: 18),
+                        const SizedBox(width: 8),
+                        Text(S.rename),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: room.isEnabled ? 'disable' : 'enable',
+                    child: Row(
+                      children: [
+                        Icon(room.isEnabled
+                            ? Icons.block
+                            : Icons.check_circle,
+                            size: 18),
+                        const SizedBox(width: 8),
+                        Text(room.isEnabled
+                            ? S.disableGroup
+                            : S.enableGroup),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: room.isMuted ? 'unmute' : 'mute',
+                    child: Row(
+                      children: [
+                        Icon(room.isMuted
+                            ? Icons.volume_up
+                            : Icons.volume_off,
+                            size: 18),
+                        const SizedBox(width: 8),
+                        Text(room.isMuted
+                            ? S.unmuteGroup
+                            : S.muteGroup),
+                      ],
+                    ),
+                  ),
+                  if (room.type == ChatRoomType.custom)
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.delete, size: 18,
+                              color: Colors.red),
+                          const SizedBox(width: 8),
+                          Text(S.delete,
+                              style: const TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                ],
               ),
             if (!isAdmin)
               const Icon(Icons.chevron_right,
@@ -171,6 +247,126 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
         onTap: room.isEnabled || isAdmin
             ? () => _openChat(room)
             : null,
+      ),
+    );
+  }
+
+  void _handleRoomAction(String action, ChatRoom room) {
+    switch (action) {
+      case 'rename':
+        _showRenameDialog(room);
+      case 'enable':
+        _chatRepository.toggleRoom(widget.areaId, room.id, true);
+      case 'disable':
+        _chatRepository.toggleRoom(widget.areaId, room.id, false);
+      case 'mute':
+        _showMuteDialog(room);
+      case 'unmute':
+        _chatRepository.unmuteRoom(widget.areaId, room.id);
+      case 'delete':
+        _showDeleteDialog(room);
+    }
+  }
+
+  void _showRenameDialog(ChatRoom room) {
+    final controller = TextEditingController(text: room.name);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(S.rename),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(hintText: S.groupName),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(S.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              final name = controller.text.trim();
+              if (name.isNotEmpty) {
+                _chatRepository.renameRoom(
+                    widget.areaId, room.id, name);
+              }
+              Navigator.pop(ctx);
+            },
+            child: Text(S.save),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showMuteDialog(ChatRoom room) {
+    showDialog(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(S.muteGroup),
+        children: [
+          SimpleDialogOption(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _chatRepository.muteRoom(widget.areaId, room.id,
+                  DateTime.now().add(const Duration(hours: 24)));
+            },
+            child: Text(S.mute24h),
+          ),
+          SimpleDialogOption(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _chatRepository.muteRoom(widget.areaId, room.id,
+                  DateTime.now().add(const Duration(days: 7)));
+            },
+            child: Text(S.mute1week),
+          ),
+          SimpleDialogOption(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _chatRepository.muteRoom(widget.areaId, room.id,
+                  DateTime(2099));
+            },
+            child: Text(S.muteUntilEnabled),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteDialog(ChatRoom room) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(S.delete),
+        content: Text(S.deleteGroupConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(S.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _chatRepository.deleteRoom(widget.areaId, room.id);
+            },
+            child: Text(S.delete,
+                style: const TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _createGroup() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateChatGroupScreen(
+          areaId: widget.areaId,
+          currentUser: widget.currentUser,
+        ),
       ),
     );
   }
@@ -197,6 +393,8 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
         return Icons.admin_panel_settings;
       case ChatRoomType.tsiwa:
         return Icons.groups;
+      case ChatRoomType.custom:
+        return Icons.group;
     }
   }
 
@@ -208,6 +406,8 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
         return Colors.deepPurple;
       case ChatRoomType.tsiwa:
         return AppTheme.primary;
+      case ChatRoomType.custom:
+        return Colors.teal;
     }
   }
 
@@ -219,6 +419,8 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
         return S.amerarsChat;
       case ChatRoomType.tsiwa:
         return S.tsiwaChat;
+      case ChatRoomType.custom:
+        return S.customGroup;
     }
   }
 }
