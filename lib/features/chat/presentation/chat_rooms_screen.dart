@@ -6,7 +6,6 @@ import 'package:tsiwa_mahber/features/chat/data/chat_repository.dart';
 import 'package:tsiwa_mahber/features/chat/domain/chat_room.dart';
 import 'package:tsiwa_mahber/features/chat/presentation/chat_screen.dart';
 import 'package:tsiwa_mahber/features/tsiwa/data/tsiwa_repository.dart';
-import 'package:tsiwa_mahber/features/tsiwa/domain/tsiwa_mahber.dart';
 
 class ChatRoomsScreen extends StatefulWidget {
   final String areaId;
