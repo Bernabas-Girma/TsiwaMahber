@@ -295,7 +295,7 @@ class _AnnouncementFormScreenState
             widget.areaId, announcement);
 
         final notification = AppNotification(
-          title: 'አዲስ ማስታወቂያ: ${announcement.title}',
+          title: 'አዲስ ማሳሰቢያ / መልእክት: ${announcement.title}',
           body: announcement.body.length > 100
               ? '${announcement.body.substring(0, 100)}...'
               : announcement.body,

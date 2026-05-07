@@ -82,13 +82,18 @@ class CsvService {
   Future<String> exportMembers(String areaId, String tsiwaId) async {
     final snapshot = await _firestore
         .collection(FirestorePaths.members(areaId, tsiwaId))
-        .where('deletedAt', isNull: true)
-        .orderBy('orderIndex')
         .get();
 
+    final docs = snapshot.docs.where((doc) {
+      final data = doc.data();
+      return data['deletedAt'] == null;
+    }).toList();
+
+    final members = docs.map((doc) => Member.fromDoc(doc)).toList()
+      ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+
     final rows = <List<String>>[memberHeaders];
-    for (final doc in snapshot.docs) {
-      final m = Member.fromDoc(doc);
+    for (final m in members) {
       rows.add([
         m.fullName,
         m.christianName,
@@ -572,16 +577,17 @@ class CsvService {
     try {
       final snapshot = await _firestore
           .collection(FirestorePaths.members(areaId, tsiwaId))
-          .where('deletedAt', isNull: true)
-          .where('isActive', isEqualTo: true)
           .get();
 
       int memberCount = 0;
       int museCount = 0;
 
       for (final doc in snapshot.docs) {
+        final data = doc.data();
+        if (data['deletedAt'] != null) continue;
+        if (data['isActive'] != true) continue;
         memberCount++;
-        final role = doc.data()['role'] as String?;
+        final role = data['role'] as String?;
         if (role == 'muse' || role == 'assistant_muse') {
           museCount++;
         }

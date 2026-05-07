@@ -198,7 +198,7 @@ class _TelegramSettingsScreenState
                               fontWeight: FontWeight.w600),
                         ),
                         SwitchListTile(
-                          title: const Text('ማስታወቂያዎች'),
+                          title: const Text('ማሳሰቢያዎች / መልእክቶች'),
                           subtitle: Text(
                               S.sendAnnouncements),
                           value: _sendAnnouncements,

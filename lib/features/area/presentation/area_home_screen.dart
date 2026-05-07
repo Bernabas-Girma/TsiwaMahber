@@ -345,7 +345,7 @@ class _AreaHomeScreenState extends State<AreaHomeScreen> {
         ),
         AppInfoCard(
           icon: Icons.campaign,
-          title: 'ማስታወቂያዎች',
+          title: 'ማሳሰቢያዎች / መልእክቶች',
           subtitle: S.viewAnnouncements,
           trailing: _buildUnreadBadge(),
           onTap: () {
