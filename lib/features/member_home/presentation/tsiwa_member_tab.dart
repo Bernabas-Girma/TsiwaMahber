@@ -12,6 +12,7 @@ import 'package:tsiwa_mahber/features/announcements/data/announcement_repository
 import 'package:tsiwa_mahber/features/announcements/domain/announcement.dart';
 import 'package:tsiwa_mahber/features/announcements/presentation/announcement_detail_screen.dart';
 import 'package:tsiwa_mahber/core/constants/app_constants.dart';
+import 'package:tsiwa_mahber/core/utils/image_url_helper.dart';
 
 class TsiwaMemberTab extends StatefulWidget {
   final AppUser currentUser;
@@ -153,7 +154,8 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
                   borderRadius: BorderRadius.circular(12),
                   image: tsiwa.profileImageUrl.isNotEmpty
                       ? DecorationImage(
-                          image: NetworkImage(tsiwa.profileImageUrl),
+                          image: NetworkImage(
+                              ImageUrlHelper.toDirectUrl(tsiwa.profileImageUrl)),
                           fit: BoxFit.cover,
                         )
                       : null,
@@ -280,7 +282,8 @@ class _TsiwaMemberTabState extends State<TsiwaMemberTab> {
                 borderRadius: BorderRadius.circular(10),
                 image: tsiwa.profileImageUrl.isNotEmpty
                     ? DecorationImage(
-                        image: NetworkImage(tsiwa.profileImageUrl),
+                        image: NetworkImage(
+                            ImageUrlHelper.toDirectUrl(tsiwa.profileImageUrl)),
                         fit: BoxFit.cover,
                       )
                     : null,

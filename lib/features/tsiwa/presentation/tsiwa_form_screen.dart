@@ -5,6 +5,7 @@ import 'package:tsiwa_mahber/core/theme/app_theme.dart';
 import 'package:tsiwa_mahber/features/tsiwa/data/tsiwa_repository.dart';
 import 'package:tsiwa_mahber/features/tsiwa/domain/tsiwa_mahber.dart';
 import 'package:tsiwa_mahber/core/l10n/app_strings.dart';
+import 'package:tsiwa_mahber/core/utils/image_url_helper.dart';
 
 class TsiwaFormScreen extends StatefulWidget {
   final String areaId;
@@ -430,7 +431,8 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.network(
-                  _profileImageUrlController.text.trim(),
+                  ImageUrlHelper.toDirectUrl(
+                      _profileImageUrlController.text.trim()),
                   width: 80,
                   height: 80,
                   fit: BoxFit.cover,
