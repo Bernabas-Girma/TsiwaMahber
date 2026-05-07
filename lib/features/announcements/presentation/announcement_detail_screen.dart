@@ -7,6 +7,7 @@ import 'package:tsiwa_mahber/features/announcements/domain/announcement.dart';
 import 'package:tsiwa_mahber/features/announcements/domain/read_receipt.dart';
 import 'package:tsiwa_mahber/features/auth/domain/app_user.dart';
 import 'package:tsiwa_mahber/core/l10n/app_strings.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' as fs;
 
 class AnnouncementDetailScreen extends StatefulWidget {
   final String areaId;
@@ -29,6 +30,11 @@ class _AnnouncementDetailScreenState
     extends State<AnnouncementDetailScreen> {
   final _repository = AnnouncementRepository();
   bool _hasAutoMarked = false;
+
+  bool get _isDev =>
+      widget.currentUser?.role == UserRole.developer;
+  bool get _isAdmin =>
+      widget.currentUser?.role.canEdit ?? false;
 
   bool get _canSeeReadReceipts {
     final role = widget.currentUser?.role;
@@ -87,6 +93,16 @@ class _AnnouncementDetailScreenState
         return Scaffold(
           appBar: AppBar(
             title: Text(S.announcement),
+            actions: [
+              if (_isDev || _isAdmin)
+                IconButton(
+                  icon: const Icon(Icons.notifications_active,
+                      color: Colors.orange),
+                  tooltip: S.ringBell,
+                  onPressed: () =>
+                      _ringBell(announcement),
+                ),
+            ],
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -290,4 +306,42 @@ class _AnnouncementDetailScreenState
     );
   }
 
+  Future<void> _ringBell(Announcement announcement) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(S.ringBell),
+        content: Text(S.ringBellConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(S.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(S.ringBell),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    await fs.FirebaseFirestore.instance
+        .collection('areas/${widget.areaId}/ringBell')
+        .add({
+      'title': announcement.title,
+      'body': announcement.body.length > 100
+          ? '${announcement.body.substring(0, 100)}...'
+          : announcement.body,
+      'announcementId': widget.announcementId,
+      'triggeredBy': widget.currentUser?.displayName ?? '',
+      'createdAt': fs.FieldValue.serverTimestamp(),
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.ringBellSent)),
+      );
+    }
+  }
 }

@@ -12,6 +12,8 @@ import 'package:tsiwa_mahber/features/area/data/area_repository.dart';
 import 'package:tsiwa_mahber/features/area/presentation/area_home_screen.dart';
 import 'package:tsiwa_mahber/features/developer/data/developer_service.dart';
 import 'package:tsiwa_mahber/features/member_home/presentation/member_home_screen.dart';
+import 'package:tsiwa_mahber/core/services/notification_listener_service.dart';
+import 'package:tsiwa_mahber/core/constants/app_constants.dart';
 
 class AuthGate extends StatefulWidget {
   final ThemeProvider themeProvider;
@@ -85,7 +87,15 @@ class _AuthGateState extends State<AuthGate> {
     }
   }
 
+  void _startNotifications(String userId) {
+    NotificationListenerService().start(
+      userId: userId,
+      areaId: AppConstants.defaultAreaId,
+    );
+  }
+
   void _onMemberLogin(AppUser user) {
+    _startNotifications(user.uid);
     _memberWatchSub?.cancel();
     _memberWatchSub = _authRepository.watchAppUser(user.uid).listen((updated) {
       if (!mounted) return;
@@ -104,6 +114,7 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   Future<void> _logoutMember() async {
+    NotificationListenerService().stop();
     _memberWatchSub?.cancel();
     _memberWatchSub = null;
     // Sign out the anonymous Firebase Auth session.
@@ -155,6 +166,10 @@ class _AuthGateState extends State<AuthGate> {
 
           if (_devUser != null && !_devUser!.isActive) {
             return _buildBlockedScreen();
+          }
+
+          if (_devUser != null) {
+            _startNotifications(_devUser!.uid);
           }
 
           return AreaHomeScreen(

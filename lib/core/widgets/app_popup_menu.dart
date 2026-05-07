@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:tsiwa_mahber/core/theme/app_theme.dart';
 import 'package:tsiwa_mahber/features/developer/data/developer_service.dart';
 import 'package:tsiwa_mahber/core/l10n/app_strings.dart';
+import 'package:tsiwa_mahber/features/settings/presentation/about_screen.dart';
 
 class AppPopupMenu extends StatelessWidget {
   final ThemeProvider themeProvider;
@@ -69,6 +70,15 @@ class AppPopupMenu extends StatelessWidget {
               dense: true,
             ),
           ),
+        PopupMenuItem<String>(
+          value: 'about',
+          child: ListTile(
+            leading: const Icon(Icons.info_outline, size: 20),
+            title: Text(S.about),
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+          ),
+        ),
         const PopupMenuDivider(),
         PopupMenuItem<String>(
           value: 'exit',
@@ -108,6 +118,15 @@ class AppPopupMenu extends StatelessWidget {
         } else {
           await GoogleSignIn().signOut();
           await FirebaseAuth.instance.signOut();
+        }
+        break;
+      case 'about':
+        if (context.mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => const AboutScreen()),
+          );
         }
         break;
       case 'exit':

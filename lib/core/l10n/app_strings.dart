@@ -810,4 +810,51 @@ class S {
 
   // ── Premium themes ──
   static String get chooseTheme => _am ? 'ገጽታ ይምረጡ' : 'Choose Theme';
+
+  // ── Ring bell ──
+  static String get ringBell => _am ? 'ደውል' : 'Ring Bell';
+  static String get ringBellConfirm =>
+      _am ? 'ለሁሉም አባላት ማሳሰቢያ ይላክ?' : 'Send alert to all members?';
+  static String get ringBellSent =>
+      _am ? 'ማሳሰቢያ ተላከ!' : 'Alert sent to all members!';
+
+  // ── Code change ──
+  static String get changeCode => _am ? 'የመግቢያ ኮድ ቀይር' : 'Change Login Code';
+  static String get currentCode => _am ? 'አሁን ያለው ኮድ' : 'Current Code';
+  static String get newCode => _am ? 'አዲስ ኮድ' : 'New Code';
+  static String get confirmNewCode => _am ? 'አዲስ ኮድ ድገም' : 'Confirm New Code';
+  static String get codeMismatch =>
+      _am ? 'አዲሱ ኮድ አይመሳሰልም' : 'New codes do not match';
+  static String get wrongCurrentCode =>
+      _am ? 'የአሁኑ ኮድ ስህተት ነው' : 'Current code is incorrect';
+  static String get codeChanged =>
+      _am ? 'ኮድ በተሳካ ሁኔታ ተቀይሯል' : 'Code changed successfully';
+
+  // ── About screen ──
+  static String get about => _am ? 'ስለ መተግበሪያው' : 'About';
+  static String get version => _am ? 'ስሪት' : 'Version';
+  static String get developer => _am ? 'ገንቢ' : 'Developer';
+  static String get contact => _am ? 'ለማግኘት' : 'Contact';
+
+  // ── Onboarding ──
+  static String get onboardTitle1 =>
+      _am ? 'እንኳን ወደ ጽዋ ማህበር በደህና መጡ' : 'Welcome to Tsiwa Mahber';
+  static String get onboardBody1 =>
+      _am
+          ? 'የጽዋ ማህበር አስተዳደር መተግበሪያ — ተራ ቁጥር፣ ማሳሰቢያ፣ ውይይት እና ሌሎችንም ያስተዳድሩ'
+          : 'Manage your Tsiwa Mahber — rotation, announcements, chat and more';
+  static String get onboardTitle2 =>
+      _am ? 'ማሳሰቢያዎች እና ውይይት' : 'Announcements & Chat';
+  static String get onboardBody2 =>
+      _am
+          ? 'ማሳሰቢያዎችን ይቀበሉ፣ ከአባላት ጋር ይወያዩ፣ የተረኛ ቁጥር ያረጋግጡ'
+          : 'Receive announcements, chat with members, check your turn';
+  static String get onboardTitle3 =>
+      _am ? 'ተራ ቁጥር እና ቀን መቁጠሪያ' : 'Turns & Calendar';
+  static String get onboardBody3 =>
+      _am
+          ? 'በኢትዮጵያ ቀን መቁጠሪያ ተረኞችን ይከታተሉ፣ ከቀጣዩ ጽዋ ቀን ቀሪ ቀናት ይመልከቱ'
+          : 'Track turns on Ethiopian calendar, see days until next Tsiwa';
+  static String get getStarted => _am ? 'ጀምር' : 'Get Started';
+  static String get skip => _am ? 'ዝለል' : 'Skip';
 }

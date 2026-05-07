@@ -136,7 +136,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           children: [
                             Icon(Icons.chat_bubble_outline,
                                 size: 48,
-                                color: AppTheme.primary
+                                color: Theme.of(context).colorScheme.primary
                                     .withValues(alpha: 0.4)),
                             const SizedBox(height: 12),
                             Text(
@@ -189,8 +189,8 @@ class _ChatScreenState extends State<ChatScreen> {
               horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: isMe
-                ? AppTheme.primary
-                : AppTheme.primary.withValues(alpha: 0.1),
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(16),
               topRight: const Radius.circular(16),
@@ -211,10 +211,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text(
                     message.senderName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.primary,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ),
@@ -336,17 +336,17 @@ class _ChatScreenState extends State<ChatScreen> {
                     horizontal: 12, vertical: 6),
                 margin: const EdgeInsets.only(bottom: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.08),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.edit,
-                        size: 14, color: AppTheme.primary),
+                    Icon(Icons.edit,
+                        size: 14, color: Theme.of(context).colorScheme.primary),
                     const SizedBox(width: 6),
                     Text(S.editingMessage,
-                        style: const TextStyle(
-                            fontSize: 12, color: AppTheme.primary)),
+                        style: TextStyle(
+                            fontSize: 12, color: Theme.of(context).colorScheme.primary)),
                     const Spacer(),
                     GestureDetector(
                       onTap: _cancelEditing,
@@ -372,7 +372,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       filled: true,
                       fillColor:
-                          AppTheme.primary.withValues(alpha: 0.06),
+                          Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 10),
                     ),
@@ -392,7 +392,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     : IconButton(
                         icon: Icon(
                           isEditing ? Icons.check : Icons.send,
-                          color: AppTheme.primary,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         onPressed:
                             isEditing ? _saveEdit : _sendMessage,

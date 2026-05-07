@@ -83,13 +83,13 @@ class _ChatMembersScreenState extends State<ChatMembersScreen> {
                     child: ListTile(
                       leading: CircleAvatar(
                         backgroundColor:
-                            AppTheme.primary.withValues(alpha: 0.15),
+                            Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
                         child: Text(
                           user.displayName.isNotEmpty
                               ? user.displayName[0].toUpperCase()
                               : '?',
-                          style: const TextStyle(
-                              color: AppTheme.primary),
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
                       title: Text(user.displayName),
@@ -218,15 +218,15 @@ class _ChatMembersScreenState extends State<ChatMembersScreen> {
                             final u = users[index];
                             return ListTile(
                               leading: CircleAvatar(
-                                backgroundColor: AppTheme.primary
+                                backgroundColor: Theme.of(context).colorScheme.primary
                                     .withValues(alpha: 0.15),
                                 child: Text(
                                   u.displayName.isNotEmpty
                                       ? u.displayName[0]
                                           .toUpperCase()
                                       : '?',
-                                  style: const TextStyle(
-                                      color: AppTheme.primary),
+                                  style: TextStyle(
+                                      color: Theme.of(context).colorScheme.primary),
                                 ),
                               ),
                               title: Text(u.displayName),
