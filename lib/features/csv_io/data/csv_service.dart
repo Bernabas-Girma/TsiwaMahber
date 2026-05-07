@@ -285,8 +285,8 @@ class CsvService {
     }
     await batch.commit();
 
-    // Auto-create login accounts
-    await _createUserAccounts(importedMembers, areaId);
+    // Auto-create login accounts and link to tsiwa
+    await _createUserAccounts(importedMembers, areaId, tsiwaId: tsiwaId);
 
     await _updateTswaCounts(areaId, tsiwaId);
     return imported;
@@ -354,19 +354,21 @@ class CsvService {
     }
     await batch.commit();
 
-    // Auto-create login accounts
-    await _createUserAccounts(importedEdirMembers, areaId);
+    // Auto-create login accounts and link to edir
+    await _createUserAccounts(importedEdirMembers, areaId, edirId: edirId);
 
     await _updateEdirMemberCount(areaId, edirId);
     return imported;
   }
 
   /// Creates login accounts in the `users` collection for imported members.
-  /// Skips members whose phone already exists.
+  /// Links them to the given tsiwa/edir. Updates existing users if phone matches.
   Future<void> _createUserAccounts(
     List<dynamic> entries,
-    String areaId,
-  ) async {
+    String areaId, {
+    String? tsiwaId,
+    String? edirId,
+  }) async {
     final usersCol = _firestore.collection('users');
 
     for (final entry in entries) {
@@ -385,12 +387,36 @@ class CsvService {
 
       if (name.isEmpty || phone.isEmpty) continue;
 
-      // Skip if phone already registered
       final existing = await usersCol
           .where('phone', isEqualTo: phone)
           .limit(1)
           .get();
-      if (existing.docs.isNotEmpty) continue;
+
+      if (existing.docs.isNotEmpty) {
+        // User exists — add tsiwa/edir assignment if missing
+        final doc = existing.docs.first;
+        final updates = <String, dynamic>{};
+        if (tsiwaId != null) {
+          final ids = List<String>.from(
+              doc.data()['assignedTsiwaIds'] as List<dynamic>? ?? []);
+          if (!ids.contains(tsiwaId)) {
+            ids.add(tsiwaId);
+            updates['assignedTsiwaIds'] = ids;
+          }
+        }
+        if (edirId != null) {
+          final ids = List<String>.from(
+              doc.data()['assignedEdirIds'] as List<dynamic>? ?? []);
+          if (!ids.contains(edirId)) {
+            ids.add(edirId);
+            updates['assignedEdirIds'] = ids;
+          }
+        }
+        if (updates.isNotEmpty) {
+          await doc.reference.update(updates);
+        }
+        continue;
+      }
 
       // Default access code = last 4 digits of phone
       final code = phone.length >= 4
@@ -403,6 +429,8 @@ class CsvService {
         passwordCode: code,
         areaId: areaId,
         role: UserRole.member,
+        assignedTsiwaIds: tsiwaId != null ? [tsiwaId] : [],
+        assignedEdirIds: edirId != null ? [edirId] : [],
       );
 
       await usersCol.add(user.toCreateMap());

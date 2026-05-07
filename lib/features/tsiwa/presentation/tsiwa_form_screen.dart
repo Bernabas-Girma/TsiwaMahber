@@ -1,5 +1,9 @@
+import 'dart:io';
+
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:tsiwa_mahber/core/constants/app_constants.dart';
 import 'package:tsiwa_mahber/core/theme/app_theme.dart';
 import 'package:tsiwa_mahber/features/tsiwa/data/tsiwa_repository.dart';
@@ -32,6 +36,8 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
   late bool _isActive;
   late bool _isArchived;
   bool _isSaving = false;
+  bool _isUploadingImage = false;
+  String _profileImageUrl = '';
 
   late List<YearlyZikirEntry> _yearlyZikir;
 
@@ -59,6 +65,7 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
 
     _isActive = t?.isActive ?? true;
     _isArchived = t?.isArchived ?? false;
+    _profileImageUrl = t?.profileImageUrl ?? '';
   }
 
   @override
@@ -101,7 +108,9 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             _buildSectionHeader(S.basicInfo),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
+            _buildProfileImagePicker(),
+            const SizedBox(height: 16),
             _buildTextField(
               controller: _nameController,
               label: S.tsiwaName,
@@ -394,6 +403,107 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
     });
   }
 
+  Widget _buildProfileImagePicker() {
+    return Center(
+      child: GestureDetector(
+        onTap: _isUploadingImage ? null : _pickAndUploadImage,
+        child: Column(
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppTheme.primary.withValues(alpha: 0.3),
+                ),
+                image: _profileImageUrl.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(_profileImageUrl),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: _isUploadingImage
+                  ? const Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : _profileImageUrl.isEmpty
+                      ? const Icon(Icons.add_a_photo,
+                          color: AppTheme.primary, size: 32)
+                      : null,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _profileImageUrl.isEmpty
+                  ? S.noProfileImage
+                  : S.tapToViewDetails,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppTheme.textMuted,
+              ),
+            ),
+            if (_profileImageUrl.isNotEmpty)
+              TextButton(
+                onPressed: () =>
+                    setState(() => _profileImageUrl = ''),
+                child: Text(
+                  S.delete,
+                  style: const TextStyle(
+                      color: Colors.red, fontSize: 12),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 70,
+    );
+    if (picked == null) return;
+
+    setState(() => _isUploadingImage = true);
+
+    try {
+      final file = File(picked.path);
+      final tsiwaId = widget.existingTsiwa?.id ?? 'new_${DateTime.now().millisecondsSinceEpoch}';
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('tsiwa_images')
+          .child('$tsiwaId.jpg');
+
+      await ref.putFile(
+        file,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+
+      final url = await ref.getDownloadURL();
+      setState(() => _profileImageUrl = url);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${S.dataSaveFailed}: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingImage = false);
+      }
+    }
+  }
+
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
@@ -452,6 +562,7 @@ class _TsiwaFormScreenState extends State<TsiwaFormScreen> {
         yearlyZikir: _yearlyZikir,
         isActive: _isActive,
         isArchived: _isArchived,
+        profileImageUrl: _profileImageUrl,
         currentRotationIndex: widget.existingTsiwa?.currentRotationIndex ?? 0,
         memberCount: widget.existingTsiwa?.memberCount ?? 0,
         museCount: widget.existingTsiwa?.museCount ?? 0,

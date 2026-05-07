@@ -686,6 +686,12 @@ class S {
 
   // ── Year switcher ──
   static String yearLabel(int y) => _am ? '$y ዓ.ም.' : 'Year $y';
+  static String get selectTsiwaToView => _am ? 'ፅዋ ማህበር ይምረጡ' : 'Select a Tsiwa';
+  static String get backToList => _am ? 'ወደ ዝርዝር ተመለስ' : 'Back to list';
+  static String get tapToViewDetails =>
+      _am ? 'ለዝርዝር ይጫኑ' : 'Tap to view details';
+  static String get noProfileImage =>
+      _am ? 'ፎቶ አልተጫነም' : 'No image';
 
   // ── Order swap ──
   static String get swapOrder => _am ? 'ተራ ቀያይር' : 'Swap Order';

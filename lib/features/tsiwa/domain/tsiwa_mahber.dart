@@ -51,6 +51,9 @@ class TsiwaMahber {
 
   final int sortOrder;
 
+  /// URL for the tsiwa profile image (stored in Firebase Storage).
+  final String profileImageUrl;
+
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -72,6 +75,7 @@ class TsiwaMahber {
     this.isActive = true,
     this.isArchived = false,
     this.sortOrder = 0,
+    this.profileImageUrl = '',
     this.createdAt,
     this.updatedAt,
   });
@@ -138,6 +142,7 @@ class TsiwaMahber {
       isActive: data['isActive'] as bool? ?? true,
       isArchived: data['isArchived'] as bool? ?? false,
       sortOrder: data['sortOrder'] as int? ?? 0,
+      profileImageUrl: data['profileImageUrl'] as String? ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );
@@ -198,6 +203,7 @@ class TsiwaMahber {
       'isActive': isActive,
       'isArchived': isArchived,
       'sortOrder': sortOrder,
+      'profileImageUrl': profileImageUrl,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -217,6 +223,7 @@ class TsiwaMahber {
       'isActive': isActive,
       'isArchived': isArchived,
       'sortOrder': sortOrder,
+      'profileImageUrl': profileImageUrl,
       'updatedAt': FieldValue.serverTimestamp(),
     };
   }
@@ -239,6 +246,7 @@ class TsiwaMahber {
     bool? isActive,
     bool? isArchived,
     int? sortOrder,
+    String? profileImageUrl,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -260,6 +268,7 @@ class TsiwaMahber {
       isActive: isActive ?? this.isActive,
       isArchived: isArchived ?? this.isArchived,
       sortOrder: sortOrder ?? this.sortOrder,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

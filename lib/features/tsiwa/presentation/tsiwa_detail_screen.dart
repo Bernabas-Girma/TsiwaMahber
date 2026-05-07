@@ -112,6 +112,31 @@ class _TsiwaDetailScreenState extends State<TsiwaDetailScreen> {
       title: S.basicInfo,
       icon: Icons.info_outline,
       children: [
+        if (tsiwa.profileImageUrl.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  tsiwa.profileImageUrl,
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.church,
+                        color: AppTheme.primary, size: 36),
+                  ),
+                ),
+              ),
+            ),
+          ),
         _InfoRow(label: S.name, value: tsiwa.name),
         if (tsiwa.churchName.isNotEmpty)
           _InfoRow(label: 'ቤተ ክርስቲያን', value: tsiwa.churchName),
